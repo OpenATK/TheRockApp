@@ -54,6 +54,46 @@ export var updateDomainText = [
   setDomainText,
 ];
 
+export var setAddMode = [
+  toggleAddMode,
+];
+
+export var addRockLoc = [
+  pushNewRock,
+];
+
+export var setNewRockLoc = [
+  setRockLoc,
+];
+
+function setRockLoc({input, state}) {
+  console.log(input);
+  var obj = {
+    location: {
+      lat: input.lat,
+      lng: input.lng,
+    }
+  };
+  state.set(['app', 'model', 'rocks', input.index], obj);
+};
+
+function toggleAddMode({state}) {
+  var addMode = state.get(['app', 'view', 'add_mode']);
+  state.set(['app', 'view', 'add_mode'], !addMode);
+  console.log(addMode);
+};
+
+function pushNewRock({input, state}) {
+  //console.log(input);
+  var obj = {
+  	location: {
+       lat: input.lat,
+       lng: input.lng,
+     }
+  };
+  state.push(['app', 'model', 'rocks'], obj);
+};
+
 function getAvailableData({state, output}) {
   var token = state.get(['app', 'token']);
   var domain = state.get(['app', 'model', 'domain']);

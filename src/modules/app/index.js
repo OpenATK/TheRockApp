@@ -8,6 +8,9 @@ import { updateDomainText } from './chains';
 import { submitDomainModal } from './chains';
 import { cancelDomainModal } from './chains';
 import { displayDomainModal } from './chains';
+import { setAddMode } from './chains';
+import { addRockLoc } from './chains';
+import { setNewRockLoc } from './chains';
 
 export default (module) => {
   module.addState(
@@ -44,6 +47,18 @@ export default (module) => {
       chain: [...updateDomainText],
       immediate: true,
     },
+
+    addRockButtonClicked: [
+      ...setAddMode,
+    ],
+
+    mapClicked: [
+      ...addRockLoc,
+    ],
+
+    markerDragged: [
+      ...setNewRockLoc,
+    ],
 
   })
 }

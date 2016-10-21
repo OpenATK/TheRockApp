@@ -1,4 +1,4 @@
-:global #map-panel {
+.map-panel {
   position:absolute;
   right:0px;
   width:100vw;
