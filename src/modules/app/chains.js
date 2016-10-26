@@ -66,8 +66,32 @@ export var setNewRockLoc = [
   setRockLoc,
 ];
 
-function setRockLoc({input, state}) {
+export var setRockPicked = [
+  setPicked,
+];
+
+export var hidePickedMarker = [
+  toggleShowRock,
+];
+
+function toggleShowRock({state}) {
+  var hideMode = state.get(['app', 'view', 'hide_mode']);
+  state.set(['app', 'view', 'hide_mode'], !hideMode);
+  //console.log(hideMode);
+};
+
+function setPicked({input, state}) {
   console.log(input);
+  var curRockStatus = state.get(['app', 'model', 'rocks', input.index, 'location', 'status']);
+  if (curRockStatus == 'unpicked') {
+    state.set(['app', 'model', 'rocks', input.index, 'location', 'status'], 'picked');
+  } else {
+    state.set(['app', 'model', 'rocks', input.index, 'location', 'status'], 'unpicked');
+  };
+};
+
+function setRockLoc({input, state}) {
+  //console.log(input);
   var obj = {
     location: {
       lat: input.lat,
@@ -89,6 +113,7 @@ function pushNewRock({input, state}) {
   	location: {
        lat: input.lat,
        lng: input.lng,
+       status: 'unpicked',
      }
   };
   state.push(['app', 'model', 'rocks'], obj);

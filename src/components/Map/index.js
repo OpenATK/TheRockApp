@@ -8,13 +8,13 @@ import fastyles from '../css/font-awesome.min.css';
 import FontAwesome from 'react-fontawesome';
 
 export default connect(props => ({
-  legend: 'app.view.legends.elevation',
-  dataIndex: 'app.model.data_index',
   rocks: 'app.model.rocks',
+  hideMode: 'app.view.hide_mode',
 }), {
   addRockButtonClicked: 'app.addRockButtonClicked',
   mapClicked: 'app.mapClicked',
   markerDragged: 'app.markerDragged',
+  markerClicked: 'app.markerClicked',
 },
 
   class RockMap extends React.Component {
@@ -26,21 +26,46 @@ export default connect(props => ({
         //iconSize: [50, 50], // size of the icon
       });
 
+      var rockPickedIcon = L.icon({
+        iconUrl: 'rock_picked.png',
+        iconAnchor: [12.5, 50],
+        //iconSize: [50, 50], // size of the icon
+      });
+
       var self = this;
       var position = [40.853989, -86.142021];
       var rockMarkers = [];
-      console.log(this.props.rocks);
+      //console.log(this.props.rocks);
+
 
       this.props.rocks.forEach((rock, i) => {
         var rock;
         var position = [rock.location.lat, rock.location.lng];
+        var rockPickStatus = true;  //rock unpicked
+        //console.log(rock);
+        if (rock.location.status == 'picked') {
+        	rockPickStatus = false;  //rock picked
+        } else {
+        	rockPickStatus = true;
+        }
+        var showRock = true;
+        //console.log(this.props.hideMode);
+        if (this.props.hideMode) {
+          if (rockPickStatus == false) {
+          	showRock = false;
+          } else {
+          	showRock = true;
+          }
+        }
         rockMarkers.push(
           <Marker 
             key={uuid.v4()}
             position={position}
             draggable={true}
-            icon={rockIcon}
+            icon={(rockPickStatus) ? rockIcon : rockPickedIcon}
             onDragEnd={(e) => this.props.markerDragged({lat: e.target._latlng.lat, lng: e.target._latlng.lng, index: i})}
+            onClick={(e) => this.props.markerClicked({index: i})}
+            opacity={(showRock) ? 1.0 : 0.0}
             >
           </Marker>
         );
@@ -49,18 +74,13 @@ export default connect(props => ({
       
       return (
         <div className={styles['map-panel']}>
-          <button 
-            onClick={() => this.props.addRockButtonClicked({})}
-            >
-            Add Rock
-          </button>
-
           <Map 
             dragging={true}
             center={position} 
             ref='map'
             zoom={15}
             onClick={(e) => this.props.mapClicked({lat: e.latlng.lat, lng: e.latlng.lng})}
+            
             >
 
             <TileLayer

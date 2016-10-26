@@ -11,6 +11,8 @@ import { displayDomainModal } from './chains';
 import { setAddMode } from './chains';
 import { addRockLoc } from './chains';
 import { setNewRockLoc } from './chains';
+import { setRockPicked } from './chains';
+import { hidePickedMarker } from './chains';
 
 export default (module) => {
   module.addState(
@@ -58,6 +60,14 @@ export default (module) => {
 
     markerDragged: [
       ...setNewRockLoc,
+    ],
+
+    markerClicked: [
+      ...setRockPicked,
+    ],
+
+    hideRockButtonClicked: [
+      ...hidePickedMarker,
     ],
 
   })

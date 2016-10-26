@@ -17,6 +17,7 @@ var stateTree = {
   },
   view: {
     add_mode: false,  //new
+    hide_mode: false,  //new
     domain_modal: {
       text: '',
       visible: true,

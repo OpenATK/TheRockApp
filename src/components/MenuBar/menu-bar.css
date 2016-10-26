@@ -1,0 +1,23 @@
+.menu-bar {
+  display:inline-block;
+  right:0px;
+  top:0px;
+  width:100%;
+  z-index:2;;
+  border-style:solid;
+  border-radius:2px;
+  border-color:white;
+  background-color:white;
+}
+.menu-button {
+  display:inline-block;
+  float:right;
+  width:auto;
+  padding:8px;
+  border-style: solid;
+  border-radius: 10px;
+  border-color: brown;
+  background-color: white;
+  font-weight: bold;
+  font-size:14px;
+}
