@@ -74,6 +74,34 @@ export var hidePickedMarker = [
   toggleShowRock,
 ];
 
+export var getCurrentLocation = [
+  setCurrentLocation,
+];
+
+export var showCurrentLocation = [
+  setMapLocation,
+];
+
+function setMapLocation({state}) {
+  var currentLat = state.get(['app', 'model', 'current_location', 'lat']);
+  var currentLng = state.get(['app', 'model', 'current_location', 'lng']);
+  var obj = {
+    lat: currentLat,
+    lng: currentLng,
+  }
+  state.set(['app', 'model', 'map_location'], obj);
+  state.set(['app', 'view', 'current_location_toggle'], 'true');
+};
+
+function setCurrentLocation({input, state}) {
+  console.log(input);
+  var obj = {
+    lat: input.lat,
+    lng: input.lng,
+  }
+  state.set(['app', 'model', 'current_location'], obj);
+};
+
 function toggleShowRock({state}) {
   var hideMode = state.get(['app', 'view', 'hide_mode']);
   state.set(['app', 'view', 'hide_mode'], !hideMode);
@@ -81,7 +109,7 @@ function toggleShowRock({state}) {
 };
 
 function setPicked({input, state}) {
-  console.log(input);
+  //console.log(input);
   var curRockStatus = state.get(['app', 'model', 'rocks', input.index, 'location', 'status']);
   if (curRockStatus == 'unpicked') {
     state.set(['app', 'model', 'rocks', input.index, 'location', 'status'], 'picked');

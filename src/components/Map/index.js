@@ -10,16 +10,37 @@ import FontAwesome from 'react-fontawesome';
 export default connect(props => ({
   rocks: 'app.model.rocks',
   hideMode: 'app.view.hide_mode',
+  currentLoc: 'app.model.current_location',
+  mapLocation: 'app.model.map_location',
+  currentToggle: 'app.view.current_location_toggle',
 }), {
   addRockButtonClicked: 'app.addRockButtonClicked',
   mapClicked: 'app.mapClicked',
   markerDragged: 'app.markerDragged',
   markerClicked: 'app.markerClicked',
+  handleLocationFound: 'app.handleLocationFound',
 },
 
   class RockMap extends React.Component {
 
+    componentDidMount() {
+      this.refs.map.leafletElement.locate()
+    }
+
     render() {
+      var currentMarker = [];
+      //var currentMarker = (this.props.currentToggle) ? () : null;
+      var currentPosition = [this.props.mapLocation.lat, this.props.mapLocation.lng];
+      if (this.props.currentToggle) {
+        currentMarker.push(
+          <Marker
+            key={uuid.v4()}
+            position={currentPosition}
+            >
+          </Marker>
+        );
+      }
+
       var rockIcon = L.icon({
         iconUrl: 'rock.png',
         iconAnchor: [12.5, 50],
@@ -33,14 +54,14 @@ export default connect(props => ({
       });
 
       var self = this;
-      var position = [40.853989, -86.142021];
+      var position = [40.4286882, -86.9137644];
       var rockMarkers = [];
       //console.log(this.props.rocks);
 
 
       this.props.rocks.forEach((rock, i) => {
         var rock;
-        var position = [rock.location.lat, rock.location.lng];
+        var rockPosition = [rock.location.lat, rock.location.lng];
         var rockPickStatus = true;  //rock unpicked
         //console.log(rock);
         if (rock.location.status == 'picked') {
@@ -60,7 +81,7 @@ export default connect(props => ({
         rockMarkers.push(
           <Marker 
             key={uuid.v4()}
-            position={position}
+            position={rockPosition}
             draggable={true}
             icon={(rockPickStatus) ? rockIcon : rockPickedIcon}
             onDragEnd={(e) => this.props.markerDragged({lat: e.target._latlng.lat, lng: e.target._latlng.lng, index: i})}
@@ -71,16 +92,18 @@ export default connect(props => ({
         );
       });
 
-      
+      //center={(this.props.mapLocation) ? this.props.mapLocation : position}
+      //{currentMarker}
+      //console.log(this.props.mapLocation);
       return (
         <div className={styles['map-panel']}>
           <Map 
             dragging={true}
-            center={position} 
+            center={(this.props.currentToggle) ? this.props.mapLocation : position} 
             ref='map'
             zoom={15}
             onClick={(e) => this.props.mapClicked({lat: e.latlng.lat, lng: e.latlng.lng})}
-            
+            onLocationfound={(e) => this.props.handleLocationFound({lat:e.latlng.lat, lng:e.latlng.lng})}
             >
 
             <TileLayer
@@ -88,6 +111,7 @@ export default connect(props => ({
               attribution='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
             />
             {rockMarkers}
+            {currentMarker}
           </Map>
         </div>
       );

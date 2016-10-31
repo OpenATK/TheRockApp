@@ -13,6 +13,8 @@ import { addRockLoc } from './chains';
 import { setNewRockLoc } from './chains';
 import { setRockPicked } from './chains';
 import { hidePickedMarker } from './chains';
+import { getCurrentLocation } from './chains';
+import { showCurrentLocation } from './chains';
 
 export default (module) => {
   module.addState(
@@ -69,6 +71,14 @@ export default (module) => {
     hideRockButtonClicked: [
       ...hidePickedMarker,
     ],
+
+    handleLocationFound: [
+      ...getCurrentLocation,
+    ],
+
+    currentLocationButtonClicked: [
+      ...showCurrentLocation,
+    ]
 
   })
 }
