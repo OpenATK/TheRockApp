@@ -14,6 +14,7 @@ var stateTree = {
     available_geohashes: {},
     current_location: {},  //keep updating current location
     map_location: {},  //set when a button clicked and center to that location
+    map_center_location: {},
     rocks: [],  //new
   },
   view: {

@@ -7,10 +7,12 @@ import styles from './menu-bar.css';
 
 export default connect(props => ({
   hideMode: 'app.view.hide_mode',
+  centerLocation: 'app.model.map_center_location',
 }), {
   addRockButtonClicked: 'app.addRockButtonClicked',
   hideRockButtonClicked: 'app.hideRockButtonClicked',
   currentLocationButtonClicked: 'app.currentLocationButtonClicked',
+  mapClicked: 'app.mapClicked',
 },
 
   class MenuBar extends React.Component {
@@ -80,7 +82,7 @@ export default connect(props => ({
           <img 
             className={styles['menu-image']} 
             src="add_button.png"
-            onClick={() => this.props.addRockButtonClicked({})}
+            onClick={() => this.props.mapClicked({lat: this.props.centerLocation.lat, lng: this.props.centerLocation.lng})}
             >            
           </img>
 

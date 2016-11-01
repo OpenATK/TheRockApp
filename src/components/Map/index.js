@@ -13,23 +13,39 @@ export default connect(props => ({
   currentLoc: 'app.model.current_location',
   mapLocation: 'app.model.map_location',
   currentToggle: 'app.view.current_location_toggle',
+  centerLocation: 'app.model.map_center_location',
+  addMode: 'app.view.add_mode',
 }), {
   addRockButtonClicked: 'app.addRockButtonClicked',
   mapClicked: 'app.mapClicked',
   markerDragged: 'app.markerDragged',
   markerClicked: 'app.markerClicked',
   handleLocationFound: 'app.handleLocationFound',
+  mapDragged: 'app.mapDragged',
 },
 
   class RockMap extends React.Component {
 
     componentDidMount() {
       this.refs.map.leafletElement.locate()
+      //console.log(this.refs.map.getLeafletElement().getCenter());
+      //console.log(this);
+      //var centerLat = this.refs.map.getLeafletElement().getCenter().lat;
+      //var centerLng = this.refs.map.getLeafletElement().getCenter().lng;
+      //console.log(centerLat);
+      //console.log(centerLng);
     }
 
     render() {
+//Get Initial Center Location of Map...
+      if (this.refs.map) {
+        console.log(this.refs.map.getLeafletElement().getCenter());
+        var centerLat = this.refs.map.getLeafletElement().getCenter().lat;
+        var centerLng = this.refs.map.getLeafletElement().getCenter().lng;
+      }
+
+//Add Current Location Marker...
       var currentMarker = [];
-      //var currentMarker = (this.props.currentToggle) ? () : null;
       var currentPosition = [this.props.mapLocation.lat, this.props.mapLocation.lng];
       if (this.props.currentToggle) {
         currentMarker.push(
@@ -41,6 +57,7 @@ export default connect(props => ({
         );
       }
 
+//Add Rock Marker...
       var rockIcon = L.icon({
         iconUrl: 'rock.png',
         iconAnchor: [12.5, 50],
@@ -53,24 +70,20 @@ export default connect(props => ({
         //iconSize: [50, 50], // size of the icon
       });
 
-      var self = this;
       var position = [40.4286882, -86.9137644];
       var rockMarkers = [];
-      //console.log(this.props.rocks);
 
-
+//rocks: rock location array in state tree...
       this.props.rocks.forEach((rock, i) => {
-        var rock;
+        var rock; //...each rock location
         var rockPosition = [rock.location.lat, rock.location.lng];
-        var rockPickStatus = true;  //rock unpicked
-        //console.log(rock);
+        var rockPickStatus = true;  //...rock unpicked
         if (rock.location.status == 'picked') {
-        	rockPickStatus = false;  //rock picked
+        	rockPickStatus = false;  //...rock picked
         } else {
         	rockPickStatus = true;
         }
         var showRock = true;
-        //console.log(this.props.hideMode);
         if (this.props.hideMode) {
           if (rockPickStatus == false) {
           	showRock = false;
@@ -92,9 +105,6 @@ export default connect(props => ({
         );
       });
 
-      //center={(this.props.mapLocation) ? this.props.mapLocation : position}
-      //{currentMarker}
-      //console.log(this.props.mapLocation);
       return (
         <div className={styles['map-panel']}>
           <Map 
@@ -104,6 +114,8 @@ export default connect(props => ({
             zoom={15}
             onClick={(e) => this.props.mapClicked({lat: e.latlng.lat, lng: e.latlng.lng})}
             onLocationfound={(e) => this.props.handleLocationFound({lat:e.latlng.lat, lng:e.latlng.lng})}
+            onLoad={(this.refs.map) ? (() => this.props.mapDragged({lat: centerLat, lng: centerLng})) : console.log("NOT YET")}
+            onDragEnd={(this.refs.map) ? (() => this.props.mapDragged({lat:this.refs.map.getLeafletElement().getCenter().lat, lng: this.refs.map.getLeafletElement().getCenter().lng})) : console.log("NOT YET")}
             >
 
             <TileLayer

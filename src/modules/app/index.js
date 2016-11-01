@@ -15,6 +15,7 @@ import { setRockPicked } from './chains';
 import { hidePickedMarker } from './chains';
 import { getCurrentLocation } from './chains';
 import { showCurrentLocation } from './chains';
+import { getMapCenter } from './chains';
 
 export default (module) => {
   module.addState(
@@ -78,7 +79,11 @@ export default (module) => {
 
     currentLocationButtonClicked: [
       ...showCurrentLocation,
-    ]
+    ],
+
+    mapDragged: [
+      ...getMapCenter,
+    ],
 
   })
 }

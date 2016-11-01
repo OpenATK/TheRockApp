@@ -63,7 +63,7 @@ export var addRockLoc = [
 ];
 
 export var setNewRockLoc = [
-  setRockLoc,
+  setRockLoc, setPicked,
 ];
 
 export var setRockPicked = [
@@ -81,6 +81,18 @@ export var getCurrentLocation = [
 export var showCurrentLocation = [
   setMapLocation,
 ];
+export var getMapCenter = [
+  setMapCenter,
+];
+
+function setMapCenter({input, state}) {
+  console.log(input);
+  var obj = {
+    lat: input.lat,
+    lng: input.lng,
+  }
+  state.set(['app', 'model', 'map_center_location'], obj);
+};
 
 function setMapLocation({state}) {
   var currentLat = state.get(['app', 'model', 'current_location', 'lat']);
@@ -132,7 +144,7 @@ function setRockLoc({input, state}) {
 function toggleAddMode({state}) {
   var addMode = state.get(['app', 'view', 'add_mode']);
   state.set(['app', 'view', 'add_mode'], !addMode);
-  console.log(addMode);
+  //console.log(addMode);
 };
 
 function pushNewRock({input, state}) {
