@@ -1,0 +1,27 @@
+.pick-button {
+  width: 50px;
+  height: 67px;
+  background-image: url('../../../dist/rock_pick_up.png');
+  background-color: black;
+  align-items: center;
+  order: 1;
+}
+
+.put-button {
+  width: 50px;
+  height: 67px;
+  background-image: url('../../../dist/rock_put_down.png');
+  background-color: black;
+  align-items: center;
+  order: 1;
+}
+
+.comment-input {
+  position: relative;
+  right: 40px;
+  border-width: 3px;
+  border-radius: 10px;
+  align-items: center;
+  order: 2;
+  outline: none;
+}

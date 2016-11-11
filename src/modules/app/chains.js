@@ -8,6 +8,7 @@ import { Promise } from 'bluebird';
 var agent = require('superagent-promise')(require('superagent'), Promise);
 import PouchDB from 'pouchdb';
 import cache from '../../components/RasterLayer/cache.js';
+import { LatLngBounds } from 'react-leaflet';
 
 var drawFirstGeohashes = [
   getToken, {
@@ -54,16 +55,12 @@ export var updateDomainText = [
   setDomainText,
 ];
 
-export var setAddMode = [
-  toggleAddMode,
-];
-
 export var addRockLoc = [
-  pushNewRock,
+  pushNewRock, showEditPanel,
 ];
 
 export var setNewRockLoc = [
-  setRockLoc, setPicked,
+  setRockLoc,
 ];
 
 export var setRockPicked = [
@@ -81,17 +78,44 @@ export var getCurrentLocation = [
 export var showCurrentLocation = [
   setMapLocation,
 ];
+
 export var getMapCenter = [
-  setMapCenter,
+  setMapCenter, updateBounds, hideEditPanel,
 ];
 
+export var showEdit = [
+  showEditPanel,
+];
+
+export var setBounds = [
+  updateBounds,
+];
+
+function updateBounds({input, state}) {
+  state.set(['app', 'model', 'map_bounds'], input.bounds);
+//  state.set(['app', 'model', 'map_bounds', 0], input.southwest);
+//  state.set(['app', 'model', 'map_bounds', 1], input.northeast);
+};
+
+function showEditPanel({input, state}) {
+  state.set(['app', 'view', 'marker_edit_mode'], true);
+  state.set(['app', 'model', 'selected_key'], input.id);
+};
+
+function hideEditPanel({state}) {
+  state.set(['app', 'view', 'marker_edit_mode'], false);
+};
+
 function setMapCenter({input, state}) {
-  console.log(input);
+  //console.log(input);
   var obj = {
     lat: input.lat,
     lng: input.lng,
   }
   state.set(['app', 'model', 'map_center_location'], obj);
+  //if (state.get(['app', 'view', 'current_location_toggle']) == true) {
+  //  state.set(['app', 'view', 'current_location_toggle'], false);
+  //}
 };
 
 function setMapLocation({state}) {
@@ -101,62 +125,91 @@ function setMapLocation({state}) {
     lat: currentLat,
     lng: currentLng,
   }
-  state.set(['app', 'model', 'map_location'], obj);
-  state.set(['app', 'view', 'current_location_toggle'], 'true');
+  //state.set(['app', 'model', 'map_location'], obj);
+  //state.set(['app', 'view', 'current_location_toggle'], true);
+  if (currentLat) {
+    state.set(['app', 'model', 'map_center_location'], obj);
+    state.set(['app', 'view', 'current_location_toggle'], true);
+  }
 };
 
 function setCurrentLocation({input, state}) {
-  console.log(input);
+  //console.log(input);
   var obj = {
     lat: input.lat,
     lng: input.lng,
   }
   state.set(['app', 'model', 'current_location'], obj);
+  state.set(['app', 'view', 'current_location_state'], true);
 };
 
 function toggleShowRock({state}) {
-  var hideMode = state.get(['app', 'view', 'hide_mode']);
-  state.set(['app', 'view', 'hide_mode'], !hideMode);
-  //console.log(hideMode);
+  var showAll = state.get(['app', 'view', 'show_all_rocks']);
+  state.set(['app', 'view', 'show_all_rocks'], !showAll);
 };
 
-function setPicked({input, state}) {
+function setPicked({state}) {
   //console.log(input);
-  var curRockStatus = state.get(['app', 'model', 'rocks', input.index, 'location', 'status']);
-  if (curRockStatus == 'unpicked') {
-    state.set(['app', 'model', 'rocks', input.index, 'location', 'status'], 'picked');
+  var selectedRock = state.get(['app', 'model', 'selected_key']);
+  var picked = state.get(['app', 'model', 'rocks', selectedRock, 'picked']);
+  if (!picked) {
+    state.set(['app', 'model', 'rocks', selectedRock, 'picked'], true);
+    state.set(['app', 'view', 'rock_pick_state'], true);
   } else {
-    state.set(['app', 'model', 'rocks', input.index, 'location', 'status'], 'unpicked');
+    state.set(['app', 'model', 'rocks', selectedRock, 'picked'], false);
+    state.set(['app', 'view', 'rock_pick_state'], false);
   };
 };
 
 function setRockLoc({input, state}) {
   //console.log(input);
-  var obj = {
-    location: {
-      lat: input.lat,
-      lng: input.lng,
-    }
+  var location = {
+    lat: input.lat,
+    lng: input.lng,
   };
-  state.set(['app', 'model', 'rocks', input.index], obj);
-};
-
-function toggleAddMode({state}) {
-  var addMode = state.get(['app', 'view', 'add_mode']);
-  state.set(['app', 'view', 'add_mode'], !addMode);
-  //console.log(addMode);
+  state.set(['app', 'model', 'rocks', input.id, 'location'], location);
 };
 
 function pushNewRock({input, state}) {
+  var id = uuid.v4();
   //console.log(input);
-  var obj = {
-  	location: {
-       lat: input.lat,
-       lng: input.lng,
-       status: 'unpicked',
-     }
-  };
-  state.push(['app', 'model', 'rocks'], obj);
+  var currentLocState = state.get(['app', 'view', 'current_location_state']);
+  
+  if (currentLocState == false) {
+    var obj = {
+      id: id,
+    	location: {
+         lat: input.lat,
+         lng: input.lng,
+       },
+       picked: false,
+    };
+  }
+
+  if (currentLocState == true) {
+    //var southwest = state.get(['app', 'model', 'map_bounds', 0]);
+    //var northeast = state.get(['app', 'model', 'map_bounds', 1]);
+    //var mapBounds = (southwest, northeast);
+    var mapBounds = state.get(['app', 'model', 'map_bounds']);
+
+    var currentLat = state.get(['app', 'model', 'current_location', 'lat']); 
+    var currentLng = state.get(['app', 'model', 'current_location', 'lng']);
+    
+    //console.log(mapBounds.contains(currentLat, currentLng));
+
+    var obj = {
+      id: id,
+      location: {
+         lat: currentLat,
+         lng: currentLng,
+       },
+       picked: false,
+    };
+
+    //console.log(mapBounds.contains(obj.location));
+
+  }
+  state.set(['app', 'model', 'rocks', id], obj);
 };
 
 function getAvailableData({state, output}) {

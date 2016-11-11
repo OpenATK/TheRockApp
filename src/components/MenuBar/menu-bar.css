@@ -1,7 +1,5 @@
 .menu-bar {
-  display:inline-block;
-  top:0px;
-  width:100%;
+  order: 1;
   border-style:solid;
   border-color:gray;
   background-color:black;
@@ -22,6 +20,7 @@
 */
 .menu-title {
   display:inline-block;
+  font-family:sans-serif;
   font-size:40px;
   line-height:150%;
   color:white;

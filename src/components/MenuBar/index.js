@@ -6,51 +6,17 @@ import uuid from 'uuid';
 import styles from './menu-bar.css';
 
 export default connect(props => ({
-  hideMode: 'app.view.hide_mode',
+  showAll: 'app.view.show_all_rocks',
   centerLocation: 'app.model.map_center_location',
+  rockPickStatus: 'app.view.rock_pick_state',
 }), {
-  addRockButtonClicked: 'app.addRockButtonClicked',
   hideRockButtonClicked: 'app.hideRockButtonClicked',
-  currentLocationButtonClicked: 'app.currentLocationButtonClicked',
-  mapClicked: 'app.mapClicked',
+  addRockButtonClicked: 'app.addRockButtonClicked',
 },
 
   class MenuBar extends React.Component {
 
-/*
-          <button 
-            type="button" 
-            className={styles['menu-add-button']} 
-            onClick={() => this.props.addRockButtonClicked({})}
-            >
-            Add Rock
-          </button>
-
-          <button 
-            type="button" 
-            className={styles['menu-button']} 
-            onClick={() => this.props.currentLocationButtonClicked({})}
-            >
-            Current Location
-          </button>
-
-          <button 
-            type="button" 
-            className={styles['menu-button']} 
-            onClick={() => this.props.hideRockButtonClicked({})}
-            >
-            {!this.props.hideMode ? 'Hide Picked Rocks' : 'Show All Rocks'}
-          </button>
-*/
-
     render() {
-      /*
-      var addIcon = L.icon({
-        iconUrl: 'add_button.png',
-        //iconAnchor: [12.5, 50],
-        //iconSize: [50, 50], // size of the icon
-      });
-      */
       return (
         <div className={styles['menu-bar']}>
           <img 
@@ -67,22 +33,15 @@ export default connect(props => ({
 
           <img 
             className={styles['menu-image']} 
-            src={(!this.props.hideMode) ? "eye_all_rocks.png" : "eye_unpicked.png"}
+            src={(this.props.showAll) ? "eye_all_rocks.png" : "eye_unpicked.png"}
             onClick={() => this.props.hideRockButtonClicked({})}
-            >            
-          </img>
-
-          <img 
-            className={styles['menu-image']} 
-            src="current_location.png"
-            onClick={() => this.props.currentLocationButtonClicked({})}
             >            
           </img>
           
           <img 
             className={styles['menu-image']} 
             src="add_button.png"
-            onClick={() => this.props.mapClicked({lat: this.props.centerLocation.lat, lng: this.props.centerLocation.lng})}
+            onClick={() => this.props.addRockButtonClicked({lat: this.props.centerLocation.lat, lng: this.props.centerLocation.lng, status: this.props.rockPickStatus})}
             >            
           </img>
 

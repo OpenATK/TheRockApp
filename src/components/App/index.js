@@ -18,7 +18,7 @@ export default connect({
 
     render() {
       return (
-        <div className="app">
+        <div className={styles['app']}>
           <MenuBar />
           <RockMap />
         </div>

@@ -8,7 +8,6 @@ import { updateDomainText } from './chains';
 import { submitDomainModal } from './chains';
 import { cancelDomainModal } from './chains';
 import { displayDomainModal } from './chains';
-import { setAddMode } from './chains';
 import { addRockLoc } from './chains';
 import { setNewRockLoc } from './chains';
 import { setRockPicked } from './chains';
@@ -16,6 +15,9 @@ import { hidePickedMarker } from './chains';
 import { getCurrentLocation } from './chains';
 import { showCurrentLocation } from './chains';
 import { getMapCenter } from './chains';
+import { showEdit } from './chains';
+import { hideEdit } from './chains';
+import { setBounds } from './chains';
 
 export default (module) => {
   module.addState(
@@ -54,10 +56,6 @@ export default (module) => {
     },
 
     addRockButtonClicked: [
-      ...setAddMode,
-    ],
-
-    mapClicked: [
       ...addRockLoc,
     ],
 
@@ -65,7 +63,7 @@ export default (module) => {
       ...setNewRockLoc,
     ],
 
-    markerClicked: [
+    pickButtonClicked: [
       ...setRockPicked,
     ],
 
@@ -83,6 +81,14 @@ export default (module) => {
 
     mapDragged: [
       ...getMapCenter,
+    ],
+
+    rockClicked: [
+      ...showEdit,
+    ],
+
+    boundsFound: [
+      ...setBounds,
     ],
 
   })

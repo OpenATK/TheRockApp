@@ -13,14 +13,17 @@ var stateTree = {
     geohashes_on_screen: {},
     available_geohashes: {},
     current_location: {},  //keep updating current location
-    map_location: {},  //set when a button clicked and center to that location
     map_center_location: {},
-    rocks: [],  //new
+    rocks: {},  //new
+    selected_key: {},
+    map_bounds: {},
   },
   view: {
+    rock_pick_state: false,
+    current_location_state: false,
+    marker_edit_mode: false,
     current_location_toggle: false,
-    add_mode: false,  //new
-    hide_mode: false,  //new
+    show_all_rocks: true,  //new
     domain_modal: {
       text: '',
       visible: true,
