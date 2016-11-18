@@ -4,20 +4,7 @@
   border-color:gray;
   background-color:black;
 }
-/*
-.menu-button {
-  display:inline-block;
-  float:right;
-  width:auto;
-  padding:8px;
-  border-style: solid;
-  border-radius: 10px;
-  border-color: brown;
-  background-color: white;
-  font-weight: bold;
-  font-size:14px;
-}
-*/
+
 .menu-title {
   display:inline-block;
   font-family:sans-serif;
@@ -36,4 +23,37 @@
   width:auto;
   padding:5px;
   margin:5px;
+}
+.eye-all-button {
+  display: inline-block;
+  float:right;
+  height: 50px;
+  padding:5px;
+  margin:5px;
+  width: 50px;
+  background-size: 47px 47px;
+  background-color: black;
+  background-image: url('../../../dist/eye_all_rocks.png');
+}
+.eye-unpicked-button {
+  display: inline-block;
+  float:right;
+  height: 50px;
+  padding:5px;
+  margin:5px;
+  width: 50px;
+  background-size: 47px 47px;
+  background-color: black;
+  background-image: url('../../../dist/eye_unpicked.png');
+}
+.add-button {
+  display: inline-block;
+  float:right;
+  height: 50px;
+  padding:5px;
+  margin:5px;
+  width: 50px;
+  background-size: 47px 47px;
+  background-color: black;
+  background-image: url('../../../dist/add_button.png');
 }

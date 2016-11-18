@@ -18,6 +18,9 @@ import { getMapCenter } from './chains';
 import { showEdit } from './chains';
 import { hideEdit } from './chains';
 import { setBounds } from './chains';
+import { inputTextChanged } from './chains';
+import { addCommentText } from './chains';
+import { deleteRock } from './chains';
 
 export default (module) => {
   module.addState(
@@ -89,6 +92,18 @@ export default (module) => {
 
     boundsFound: [
       ...setBounds,
+    ],
+
+    commentInputTextChanged: [
+      ...inputTextChanged,
+    ],
+
+    addComment: [
+      ...addCommentText,
+    ],
+
+    deleteButtonClicked: [
+      ...deleteRock,
     ],
 
   })

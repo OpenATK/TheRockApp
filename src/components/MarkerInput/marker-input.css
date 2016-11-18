@@ -1,6 +1,7 @@
 .pick-button {
   width: 50px;
   height: 67px;
+  margin: 10px;
   background-image: url('../../../dist/rock_pick_up.png');
   background-color: black;
   align-items: center;
@@ -10,6 +11,7 @@
 .put-button {
   width: 50px;
   height: 67px;
+  margin: 10px;
   background-image: url('../../../dist/rock_put_down.png');
   background-color: black;
   align-items: center;
@@ -18,10 +20,22 @@
 
 .comment-input {
   position: relative;
-  right: 40px;
+  right: 170px;
+  width: 300%;
   border-width: 3px;
   border-radius: 10px;
   align-items: center;
-  order: 2;
+  order: 3;
   outline: none;
+}
+
+.delete-button {
+  width: 50px;
+  height: 67px;
+  margin: 10px;
+  background-image: url('../../../dist/delete.png');
+  background-color: black;
+  background-size: 47px 60px;
+  align-items: center;
+  order: 2;
 }

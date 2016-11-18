@@ -17,6 +17,7 @@ var stateTree = {
     rocks: {},  //new
     selected_key: {},
     map_bounds: {},
+    comment_input: '',
   },
   view: {
     rock_pick_state: false,

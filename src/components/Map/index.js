@@ -33,15 +33,8 @@ export default connect(props => ({
       var centerLng = this.refs.map.getLeafletElement().getCenter().lng;
       this.props.mapDragged({lat:centerLat, lng:centerLng});
       
-
       var bounds = this.refs.map.getLeafletElement().getBounds();
-      //console.log(bounds.contains(centerLat,centerLng));
-//      this.props.boundsFound({southwest: bounds._southWest, northeast: bounds._northEast});
       this.props.boundsFound({bounds: bounds});
-      
-      console.log(bounds._southWest);
-      console.log(bounds._northEast);
-      
     }
 
     render() {
@@ -104,7 +97,7 @@ export default connect(props => ({
             zoom={15}
             
             onLocationfound={(e) => this.props.handleLocationFound({lat:e.latlng.lat, lng:e.latlng.lng})}
-            onMoveend={(this.refs.map) ? (() => this.props.mapDragged({lat:this.refs.map.getLeafletElement().getCenter().lat, lng: this.refs.map.getLeafletElement().getCenter().lng, southwest: this.refs.map.getLeafletElement().getBounds()._southWest, northeast: this.refs.map.getLeafletElement().getBounds()._northEast})) : console.log("NOT YET")}
+            onMoveend={(this.refs.map) ? (() => this.props.mapDragged({lat:this.refs.map.getLeafletElement().getCenter().lat, lng: this.refs.map.getLeafletElement().getCenter().lng, bounds: this.refs.map.getLeafletElement().getBounds()})) : console.log("NOT YET")}
             >
 
             <TileLayer

@@ -31,19 +31,17 @@ export default connect(props => ({
             RockApp
           </font>
 
-          <img 
-            className={styles['menu-image']} 
-            src={(this.props.showAll) ? "eye_all_rocks.png" : "eye_unpicked.png"}
+          <button
+            className={styles[(this.props.showAll) ? 'eye-all-button' : 'eye-unpicked-button']}
             onClick={() => this.props.hideRockButtonClicked({})}
-            >            
-          </img>
+            >
+          </button>
           
-          <img 
-            className={styles['menu-image']} 
-            src="add_button.png"
+          <button
+            className={styles['add-button']}
             onClick={() => this.props.addRockButtonClicked({lat: this.props.centerLocation.lat, lng: this.props.centerLocation.lng, status: this.props.rockPickStatus})}
-            >            
-          </img>
+            >
+          </button>
 
         </div>
       );

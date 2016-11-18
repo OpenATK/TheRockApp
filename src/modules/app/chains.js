@@ -56,7 +56,7 @@ export var updateDomainText = [
 ];
 
 export var addRockLoc = [
-  pushNewRock, showEditPanel,
+  pushNewRock,
 ];
 
 export var setNewRockLoc = [
@@ -84,12 +84,41 @@ export var getMapCenter = [
 ];
 
 export var showEdit = [
-  showEditPanel,
+  showEditPanel, setRockComment,
 ];
 
 export var setBounds = [
   updateBounds,
 ];
+
+export var inputTextChanged = [
+  setInputValue,
+];
+
+export var addCommentText = [
+  addCommentRock,
+];
+
+export var deleteRock = [
+  removeRock,
+];
+
+function removeRock({input, state}) {
+  state.unset(['app', 'model', 'rocks', input.id]);
+};
+
+function setRockComment({input, state}) {
+  var selectedRockComment = state.get(['app', 'model', 'rocks', input.id, 'comments']);
+  state.set(['app', 'model', 'comment_input'], selectedRockComment);
+};
+
+function addCommentRock({input, state}) {
+  state.set(['app', 'model', 'rocks', input.id, 'comments'], input.text);
+};
+
+function setInputValue({input, state}) {
+  state.set(['app', 'model', 'comment_input'], input.value);
+};
 
 function updateBounds({input, state}) {
   state.set(['app', 'model', 'map_bounds'], input.bounds);
@@ -183,6 +212,7 @@ function pushNewRock({input, state}) {
          lng: input.lng,
        },
        picked: false,
+       comments: '',
     };
   }
 
@@ -204,9 +234,19 @@ function pushNewRock({input, state}) {
          lng: currentLng,
        },
        picked: false,
+       comments: '',
     };
+    //console.log(mapBounds);
+    var bounds = L.latLngBounds(mapBounds._southWest, mapBounds._northEast);
+    var currentLocation = L.latLng(obj.location.lat, obj.location.lng);
+    console.log(bounds.contains(currentLocation));
+    if (bounds.contains(currentLocation)) {
 
-    //console.log(mapBounds.contains(obj.location));
+    } else {
+    	state.set(['app', 'model', 'map_center_location', 'lat'], obj.location.lat);
+    	state.set(['app', 'model', 'map_center_location', 'lng'], obj.location.lng);
+    	state.set(['app', 'view', 'current_location_toggle'], true);
+    }
 
   }
   state.set(['app', 'model', 'rocks', id], obj);
