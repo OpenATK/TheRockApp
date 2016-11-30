@@ -100,7 +100,7 @@ export var addCommentText = [
 ];
 
 export var deleteRock = [
-  removeRock,
+  removeRock, hideEditPanel,
 ];
 
 function removeRock({input, state}) {
@@ -122,8 +122,6 @@ function setInputValue({input, state}) {
 
 function updateBounds({input, state}) {
   state.set(['app', 'model', 'map_bounds'], input.bounds);
-//  state.set(['app', 'model', 'map_bounds', 0], input.southwest);
-//  state.set(['app', 'model', 'map_bounds', 1], input.northeast);
 };
 
 function showEditPanel({input, state}) {
@@ -136,15 +134,11 @@ function hideEditPanel({state}) {
 };
 
 function setMapCenter({input, state}) {
-  //console.log(input);
   var obj = {
     lat: input.lat,
     lng: input.lng,
   }
   state.set(['app', 'model', 'map_center_location'], obj);
-  //if (state.get(['app', 'view', 'current_location_toggle']) == true) {
-  //  state.set(['app', 'view', 'current_location_toggle'], false);
-  //}
 };
 
 function setMapLocation({state}) {
@@ -154,8 +148,6 @@ function setMapLocation({state}) {
     lat: currentLat,
     lng: currentLng,
   }
-  //state.set(['app', 'model', 'map_location'], obj);
-  //state.set(['app', 'view', 'current_location_toggle'], true);
   if (currentLat) {
     state.set(['app', 'model', 'map_center_location'], obj);
     state.set(['app', 'view', 'current_location_toggle'], true);
@@ -163,7 +155,6 @@ function setMapLocation({state}) {
 };
 
 function setCurrentLocation({input, state}) {
-  //console.log(input);
   var obj = {
     lat: input.lat,
     lng: input.lng,
@@ -178,7 +169,6 @@ function toggleShowRock({state}) {
 };
 
 function setPicked({state}) {
-  //console.log(input);
   var selectedRock = state.get(['app', 'model', 'selected_key']);
   var picked = state.get(['app', 'model', 'rocks', selectedRock, 'picked']);
   if (!picked) {
@@ -191,7 +181,6 @@ function setPicked({state}) {
 };
 
 function setRockLoc({input, state}) {
-  //console.log(input);
   var location = {
     lat: input.lat,
     lng: input.lng,
@@ -201,7 +190,6 @@ function setRockLoc({input, state}) {
 
 function pushNewRock({input, state}) {
   var id = uuid.v4();
-  //console.log(input);
   var currentLocState = state.get(['app', 'view', 'current_location_state']);
   
   if (currentLocState == false) {
@@ -217,16 +205,9 @@ function pushNewRock({input, state}) {
   }
 
   if (currentLocState == true) {
-    //var southwest = state.get(['app', 'model', 'map_bounds', 0]);
-    //var northeast = state.get(['app', 'model', 'map_bounds', 1]);
-    //var mapBounds = (southwest, northeast);
     var mapBounds = state.get(['app', 'model', 'map_bounds']);
-
     var currentLat = state.get(['app', 'model', 'current_location', 'lat']); 
     var currentLng = state.get(['app', 'model', 'current_location', 'lng']);
-    
-    //console.log(mapBounds.contains(currentLat, currentLng));
-
     var obj = {
       id: id,
       location: {
@@ -236,12 +217,10 @@ function pushNewRock({input, state}) {
        picked: false,
        comments: '',
     };
-    //console.log(mapBounds);
     var bounds = L.latLngBounds(mapBounds._southWest, mapBounds._northEast);
     var currentLocation = L.latLng(obj.location.lat, obj.location.lng);
     console.log(bounds.contains(currentLocation));
     if (bounds.contains(currentLocation)) {
-
     } else {
     	state.set(['app', 'model', 'map_center_location', 'lat'], obj.location.lat);
     	state.set(['app', 'model', 'map_center_location', 'lng'], obj.location.lng);

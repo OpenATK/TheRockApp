@@ -12,9 +12,9 @@ var stateTree = {
     geohashes_to_draw: {},
     geohashes_on_screen: {},
     available_geohashes: {},
-    current_location: {},  //keep updating current location
+    current_location: {},
     map_center_location: {},
-    rocks: {},  //new
+    rocks: {},
     selected_key: {},
     map_bounds: {},
     comment_input: '',
@@ -24,7 +24,7 @@ var stateTree = {
     current_location_state: false,
     marker_edit_mode: false,
     current_location_toggle: false,
-    show_all_rocks: true,  //new
+    show_all_rocks: true,
     domain_modal: {
       text: '',
       visible: true,

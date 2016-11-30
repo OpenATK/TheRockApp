@@ -1,5 +1,4 @@
 import React, { PropTypes } from 'react';
-//import { Decorator as Cerebral, Link } from 'cerebral-view-react';
 import { connect } from 'cerebral-view-react';
 import { Icon } from 'leaflet';
 import uuid from 'uuid';
