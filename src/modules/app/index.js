@@ -7,7 +7,6 @@ import { clearCache } from './chains';
 import { updateDomainText } from './chains';
 import { submitDomainModal } from './chains';
 import { cancelDomainModal } from './chains';
-import { displayDomainModal } from './chains';
 import { addRockLoc } from './chains';
 import { setNewRockLoc } from './chains';
 import { setRockPicked } from './chains';
@@ -21,6 +20,7 @@ import { setBounds } from './chains';
 import { inputTextChanged } from './chains';
 import { addCommentText } from './chains';
 import { deleteRock } from './chains';
+import { displayDomainModal } from './chains';
 
 export default (module) => {
   module.addState(
@@ -104,6 +104,10 @@ export default (module) => {
 
     deleteButtonClicked: [
       ...deleteRock,
+    ],
+
+    setDomainButtonClicked: [
+      ...displayDomainModal,
     ],
 
   })

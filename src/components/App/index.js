@@ -3,6 +3,7 @@ import {connect} from 'cerebral-view-react';
 import RockMap from '../Map';
 import styles from './app.css'
 import MenuBar from '../MenuBar'
+import OadaDomainModal from '../OadaDomainModal'
 
 export default connect({
 
@@ -19,6 +20,7 @@ export default connect({
     render() {
       return (
         <div className={styles['app']}>
+          <OadaDomainModal />
           <MenuBar />
           <RockMap />
         </div>

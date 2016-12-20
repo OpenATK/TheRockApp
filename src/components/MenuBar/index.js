@@ -11,6 +11,8 @@ export default connect(props => ({
 }), {
   hideRockButtonClicked: 'app.hideRockButtonClicked',
   addRockButtonClicked: 'app.addRockButtonClicked',
+  clearCacheButtonClicked: 'app.clearCacheButtonClicked',
+  setDomainButtonClicked: 'app.setDomainButtonClicked',
 },
 
   class MenuBar extends React.Component {
@@ -41,6 +43,20 @@ export default connect(props => ({
             onClick={() => this.props.addRockButtonClicked({lat: this.props.centerLocation.lat, lng: this.props.centerLocation.lng, status: this.props.rockPickStatus})}
             >
           </button>
+
+         <button 
+           type="button" 
+           className={styles['clear-cache-button']}
+           onClick={()=>this.props.clearCacheButtonClicked({})}>
+           Clear Cache
+         </button>
+         
+         <button 
+           type="button" 
+           className={styles['change-domain-button']}
+           onClick={()=>this.props.setDomainButtonClicked({})}>
+           Change Domain
+         </button>
 
         </div>
       );

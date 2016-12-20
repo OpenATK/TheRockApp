@@ -7,22 +7,25 @@ import oadaIdClient from 'oada-id-client';
 import { Promise } from 'bluebird';  
 var agent = require('superagent-promise')(require('superagent'), Promise);
 import PouchDB from 'pouchdb';
-import cache from '../../components/RasterLayer/cache.js';
+import cache from './cache.js';
 import { LatLngBounds } from 'react-leaflet';
 
-var drawFirstGeohashes = [
+var getRockData = [
   getToken, {
-    success: [storeToken, getAvailableData, {
-      success: [setAvailableData],
-      error: [],
-    }], 
+    success: [
+      storeToken, 
+      getAvailableData, {
+        success: [setAvailableData],
+        error: [],
+      }
+    ], 
     error: [],
   },
 ];
 
 export var initialize = [
   getOadaDomain, {
-    cached: [setOadaDomain, hideDomainModal, drawFirstGeohashes],
+    cached: [setOadaDomain, hideDomainModal, getRockData],
     offline: [],
   },
 ];
@@ -40,15 +43,11 @@ export var clearCache = [
 ];
 
 export var submitDomainModal = [
-  setOadaDomain, hideDomainModal, drawFirstGeohashes,
+  setOadaDomain, hideDomainModal, getRockData,
 ];
 
 export var cancelDomainModal = [
   setOadaDomain, hideDomainModal,
-];
-
-export var displayDomainModal = [
-  showDomainModal,
 ];
 
 export var updateDomainText = [
@@ -101,6 +100,10 @@ export var addCommentText = [
 
 export var deleteRock = [
   removeRock, hideEditPanel,
+];
+
+export var displayDomainModal = [
+  showDomainModal,
 ];
 
 function removeRock({input, state}) {
@@ -182,8 +185,8 @@ function setPicked({state}) {
 
 function setRockLoc({input, state}) {
   var location = {
-    lat: input.lat,
-    lng: input.lng,
+    latitude: input.lat,
+    longitude: input.lng,
   };
   state.set(['app', 'model', 'rocks', input.id, 'location'], location);
 };
@@ -196,8 +199,8 @@ function pushNewRock({input, state}) {
     var obj = {
       id: id,
     	location: {
-         lat: input.lat,
-         lng: input.lng,
+         latitude: input.lat,
+         longitude: input.lng,
        },
        picked: false,
        comments: '',
@@ -211,19 +214,19 @@ function pushNewRock({input, state}) {
     var obj = {
       id: id,
       location: {
-         lat: currentLat,
-         lng: currentLng,
+         latitude: currentLat,
+         longitude: currentLng,
        },
        picked: false,
        comments: '',
     };
     var bounds = L.latLngBounds(mapBounds._southWest, mapBounds._northEast);
-    var currentLocation = L.latLng(obj.location.lat, obj.location.lng);
+    var currentLocation = L.latLng(obj.location.latitude, obj.location.longitude);
     console.log(bounds.contains(currentLocation));
     if (bounds.contains(currentLocation)) {
     } else {
-    	state.set(['app', 'model', 'map_center_location', 'lat'], obj.location.lat);
-    	state.set(['app', 'model', 'map_center_location', 'lng'], obj.location.lng);
+    	state.set(['app', 'model', 'map_center_location', 'lat'], obj.location.latitude);
+    	state.set(['app', 'model', 'map_center_location', 'lng'], obj.location.longitude);
     	state.set(['app', 'view', 'current_location_toggle'], true);
     }
 
@@ -234,34 +237,30 @@ function pushNewRock({input, state}) {
 function getAvailableData({state, output}) {
   var token = state.get(['app', 'token']);
   var domain = state.get(['app', 'model', 'domain']);
-  var url = 'https://' + domain + '/bookmarks/elevation/tiled-maps/geohash-elevation-model/geohash-length-index/';
-  var data = {};
-  cache.get(url, token).then(function(geohashLengthIndex) {
-    return Promise.each(Object.keys(geohashLengthIndex), function(ghLength) {
-      return cache.get(url + ghLength + '/geohash-index', token).then(function(ghIndex) {
-        return Promise.each(Object.keys(ghIndex), function(bucket) {
-          return cache.get(url + ghLength + '/geohash-index/' + bucket + '/geohash-data', token).then(function(geohashData) {
-            return Promise.each(Object.keys(geohashData), function(geohash) {
-              return data[geohash] = geohash;
-            })
-          })
-        })
+  var url = 'https://' + domain + '/bookmarks/rocks/list-index/';
+  var rocks = {};
+  cache.get(url, token).then(function(rocksIndex) {
+    return Promise.each(Object.keys(rocksIndex), function(key) {
+      return cache.get(url + key, token).then(function(rockItem) {
+        return rocks[key] = rockItem;
       })
     })
   }).then(function() {
-    output.success({data});
+    output.success({rocks});
   })
-};
+}
 getAvailableData.outputs = ['success', 'error'];
 getAvailableData.async = true;
 
 function setAvailableData({input, state}) {
-  state.set(['app', 'model', 'data_index'], {elevation: input.data});
+  Object.keys(input.rocks).forEach(function(rock) {
+  	state.set(['app', 'model', 'rocks', rock], input.rocks[rock]);
+  })
 };
 
 function getOadaDomain({state, output}) {
   //First, check if the domain is already in the cache;
-  var db = new PouchDB('Waterplane');
+  var db = new PouchDB('TheRockApp');
   db.get('domain').then(function(result) {
     if (result.doc.domain.indexOf('offline') > 0) {
       output.offline({}); //In cache, but not connected to server for now
@@ -279,7 +278,7 @@ getOadaDomain.async = true;
 
 function setOadaDomain({input, state}) {
   state.set(['app', 'model', 'domain'], input.value);
-  var db = new PouchDB('Waterplane');
+  var db = new PouchDB('TheRockApp');
   db.put({
     doc: {domain: input.value},
     _id: 'domain',
@@ -289,7 +288,7 @@ function setOadaDomain({input, state}) {
 };
 
 function destroyCache() {
-  var db = new PouchDB('Waterplane');
+  var db = new PouchDB('TheRockApp');
   db.destroy();
 };
 
@@ -310,14 +309,14 @@ function unregisterGeohashes({input, state}) {
 
 function getToken({input, state, output}) {
   var self = this;
-  var db = new PouchDB('Waterplane');
+  var db = new PouchDB('TheRockApp');
   db.get('token').then(function(result) {
     output.success({token:result.doc.token});
   }).catch(function(err) { //not in Pouch, prompt for user sign in
     if (err.status !== 404) console.log(err);
     var options = {
       metadata: 'eyJqa3UiOiJodHRwczovL2lkZW50aXR5Lm9hZGEtZGV2LmNvbS9jZXJ0cyIsImtpZCI6ImtqY1NjamMzMmR3SlhYTEpEczNyMTI0c2ExIiwidHlwIjoiSldUIiwiYWxnIjoiUlMyNTYifQ.eyJyZWRpcmVjdF91cmlzIjpbImh0dHBzOi8vdHJpYWxzdHJhY2tlci5vYWRhLWRldi5jb20vb2F1dGgyL3JlZGlyZWN0Lmh0bWwiLCJodHRwOi8vbG9jYWxob3N0OjgwMDAvb2F1dGgyL3JlZGlyZWN0Lmh0bWwiXSwidG9rZW5fZW5kcG9pbnRfYXV0aF9tZXRob2QiOiJ1cm46aWV0ZjpwYXJhbXM6b2F1dGg6Y2xpZW50LWFzc2VydGlvbi10eXBlOmp3dC1iZWFyZXIiLCJncmFudF90eXBlcyI6WyJpbXBsaWNpdCJdLCJyZXNwb25zZV90eXBlcyI6WyJ0b2tlbiIsImlkX3Rva2VuIiwiaWRfdG9rZW4gdG9rZW4iXSwiY2xpZW50X25hbWUiOiJUcmlhbHMgVHJhY2tlciIsImNsaWVudF91cmkiOiJodHRwczovL2dpdGh1Yi5jb20vT3BlbkFUSy9UcmlhbHNUcmFja2VyIiwiY29udGFjdHMiOlsiU2FtIE5vZWwgPHNhbm9lbEBwdXJkdWUuZWR1PiJdLCJzb2Z0d2FyZV9pZCI6IjVjYzY1YjIwLTUzYzAtNDJmMS05NjRlLWEyNTgxODA5MzM0NCIsInJlZ2lzdHJhdGlvbl9wcm92aWRlciI6Imh0dHBzOi8vaWRlbnRpdHkub2FkYS1kZXYuY29tIiwiaWF0IjoxNDc1NjA5NTkwfQ.Qsve_NiyQHGf_PclMArHEnBuVyCWvH9X7awLkO1rT-4Sfdoq0zV_ZhYlvI4QAyYSWF_dqMyiYYokeZoQ0sJGK7ZneFwRFXrVFCoRjwXLgHKaJ0QfV9Viaz3cVo3I4xyzbY4SjKizuI3cwfqFylwqfVrffHjuKR4zEmW6bNT5irI',
-      scope: 'elevation-data',
+      scope: 'rocks',
         "redirect": 'http://localhost:8000/oauth2/redirect.html',
     };
     var domain = state.get(['app', 'model', 'domain']);
@@ -331,7 +330,7 @@ getToken.outputs = ['success', 'error'];
 getToken.async = true;
 
 function storeToken({input, state}) {
-  var db = new PouchDB('Waterplane');
+  var db = new PouchDB('TheRockApp');
   db.put({
     doc: {token: input.token},
     _id: 'token',

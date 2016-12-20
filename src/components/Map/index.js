@@ -77,7 +77,7 @@ export default connect(props => ({
         rockMarkers.push(
           <Marker 
             key={key}
-            position={[rock.location.lat, rock.location.lng]}
+            position={[rock.location.latitude, rock.location.longitude]}
             draggable={true}
             icon={(rock.picked) ? rockPickedIcon : rockIcon}
             onDragEnd={(e) => this.props.markerDragged({id: key, lat: e.target._latlng.lat, lng: e.target._latlng.lng})}
@@ -97,7 +97,7 @@ export default connect(props => ({
             zoom={15}
             
             onLocationfound={(e) => this.props.handleLocationFound({lat:e.latlng.lat, lng:e.latlng.lng})}
-            onMoveend={(this.refs.map) ? (() => this.props.mapDragged({lat:this.refs.map.getLeafletElement().getCenter().lat, lng: this.refs.map.getLeafletElement().getCenter().lng, bounds: this.refs.map.getLeafletElement().getBounds()})) : console.log("NOT YET")}
+            onMoveend={(this.refs.map) ? (() => this.props.mapDragged({lat:this.refs.map.getLeafletElement().getCenter().lat, lng: this.refs.map.getLeafletElement().getCenter().lng, bounds: this.refs.map.getLeafletElement().getBounds()})) : console.log("")}
             >
 
             <TileLayer
