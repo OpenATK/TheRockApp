@@ -21,6 +21,7 @@ import { inputTextChanged } from './chains';
 import { addCommentText } from './chains';
 import { deleteRock } from './chains';
 import { displayDomainModal } from './chains';
+import { updateRockData } from './chains';
 
 export default (module) => {
   module.addState(
@@ -108,6 +109,10 @@ export default (module) => {
 
     setDomainButtonClicked: [
       ...displayDomainModal,
+    ],
+
+    syncButtonClicked: [
+      ...updateRockData,
     ],
 
   })

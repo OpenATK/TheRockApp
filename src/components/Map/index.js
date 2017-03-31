@@ -72,6 +72,7 @@ export default connect(props => ({
       var rockMarkers = [];
 
 //rocks: rock location array in state tree...
+      //if (this.props.rocks) {
       Object.keys(this.props.rocks).forEach((key) => {
         var rock = this.props.rocks[key];
         rockMarkers.push(
@@ -87,6 +88,7 @@ export default connect(props => ({
           </Marker>
         );
       });
+      //}
 
       return (
         <div className={styles['map-panel']}>

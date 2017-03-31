@@ -13,6 +13,7 @@ export default connect(props => ({
   addRockButtonClicked: 'app.addRockButtonClicked',
   clearCacheButtonClicked: 'app.clearCacheButtonClicked',
   setDomainButtonClicked: 'app.setDomainButtonClicked',
+  syncButtonClicked: 'app.syncButtonClicked',
 },
 
   class MenuBar extends React.Component {
@@ -56,6 +57,13 @@ export default connect(props => ({
            className={styles['change-domain-button']}
            onClick={()=>this.props.setDomainButtonClicked({})}>
            Change Domain
+         </button>
+
+         <button 
+           type="button" 
+           className={styles['sync-button']}
+           onClick={()=>this.props.syncButtonClicked({})}>
+           Sync
          </button>
 
         </div>

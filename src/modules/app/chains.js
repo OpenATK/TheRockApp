@@ -9,23 +9,44 @@ var agent = require('superagent-promise')(require('superagent'), Promise);
 import PouchDB from 'pouchdb';
 import cache from './cache.js';
 import { LatLngBounds } from 'react-leaflet';
+import { set, unset, copy, toggle } from 'cerebral/operators';
+import db from '../Cache'
 
 var getRockData = [
   getToken, {
     success: [
-      storeToken, 
+      storeToken,
+      setupOadaServer,
       getAvailableData, {
         success: [setAvailableData],
         error: [],
-      }
+      },
     ], 
+    error: [],
+  },
+];
+
+var getSyncStatus = [
+  getSync, {
+    success: [
+      setSyncFailedStatus,
+      updateFailedData, {
+        success: [
+          updateFailedNewRocks, {
+            success: [setSynced],
+            error: [setFailed],
+          },
+        ],
+        error: [setFailed],
+      },
+    ],
     error: [],
   },
 ];
 
 export var initialize = [
   getOadaDomain, {
-    cached: [setOadaDomain, hideDomainModal, getRockData],
+    cached: [setOadaDomain, hideDomainModal, getRockData, getSyncStatus],
     offline: [],
   },
 ];
@@ -56,14 +77,28 @@ export var updateDomainText = [
 
 export var addRockLoc = [
   pushNewRock,
+  updateNewRockData, {
+  	success: [setSynced],
+    error: [], //keep 'new' status
+  },
 ];
 
 export var setNewRockLoc = [
   setRockLoc,
+  setSyncSent,
+  updateLocationData, {
+    success: [setSynced],
+    error: [setFailed],
+  },
 ];
 
 export var setRockPicked = [
   setPicked,
+  setSyncSent,
+  updatePickStatusData, {
+  	success: [setSynced],
+    error: [setFailed],
+  },
 ];
 
 export var hidePickedMarker = [
@@ -96,19 +131,70 @@ export var inputTextChanged = [
 
 export var addCommentText = [
   addCommentRock,
+  setSyncSent,
+  updateCommentData, {
+  	success: [setSynced],
+  	error: [setFailed],
+  },
 ];
 
 export var deleteRock = [
-  removeRock, hideEditPanel,
+  setSyncSent,
+  deleteRockDataRes, {
+  	success: [
+  	  deleteRockDataBookmark, {
+  	    success: [setSynced, removeRock],
+  	    error: [setFailed],
+  	  },
+  	],
+  	error: [setFailed],
+  },
+  hideEditPanel,
 ];
 
 export var displayDomainModal = [
   showDomainModal,
 ];
 
+export var updateRockData = [
+  // sync button
+  getSyncStatus,
+];
+
+function setupOadaServer({input, state}) {
+  var token = state.get(['app', 'token']);
+  var domain = state.get(['app', 'model', 'domain']);
+  cache.setup(domain, token);
+};
+
 function removeRock({input, state}) {
   state.unset(['app', 'model', 'rocks', input.id]);
 };
+
+function deleteRockDataRes({input, state, output}) {
+  console.log("delete rock resources in the server");
+  var token = state.get(['app', 'token']);
+  var domain = state.get(['app', 'model', 'domain']);
+  var url = 'https://' + domain + '/resources/' + input.id + '/';
+
+  cache.delete(token, url).then(function() {
+    output.success({});
+  })
+};
+deleteRockDataRes.async = true;
+deleteRockDataRes.outputs = ['success', 'error'];
+
+function deleteRockDataBookmark({input, state, output}) {
+  console.log("delete rock bookmark in the server");
+  var token = state.get(['app', 'token']);
+  var domain = state.get(['app', 'model', 'domain']);
+  var url = 'https://' + domain + '/bookmarks/rocks/list-index/' + input.id + '/';
+  cache.delete(token, url).then(function() {
+    output.success({});
+  })
+};
+deleteRockDataBookmark.async = true;
+deleteRockDataBookmark.outputs = ['success', 'error'];
 
 function setRockComment({input, state}) {
   var selectedRockComment = state.get(['app', 'model', 'rocks', input.id, 'comments']);
@@ -171,7 +257,7 @@ function toggleShowRock({state}) {
   state.set(['app', 'view', 'show_all_rocks'], !showAll);
 };
 
-function setPicked({state}) {
+function setPicked({state, output}) {
   var selectedRock = state.get(['app', 'model', 'selected_key']);
   var picked = state.get(['app', 'model', 'rocks', selectedRock, 'picked']);
   if (!picked) {
@@ -181,29 +267,92 @@ function setPicked({state}) {
     state.set(['app', 'model', 'rocks', selectedRock, 'picked'], false);
     state.set(['app', 'view', 'rock_pick_state'], false);
   };
+  output({id: selectedRock});
 };
 
+function updatePickStatusData({input, state, output}) {
+  console.log("sync pick status");
+  var token = state.get(['app', 'token']);
+  var domain = state.get(['app', 'model', 'domain']);
+  //var url = 'https://' + domain + '/resources/';
+  //var resourcesUrl = 'https://' + domain + '/resources/';
+  var bookmarksUrl = 'https://' + domain + '/bookmarks/rocks/list-index/' + input.id + '/';
+  var picked = state.get(['app', 'model', 'rocks', input.id, 'picked']);
+  var data = {
+    id: input.id,
+    update: {
+      picked: picked,
+    }
+  };
+  return cache.put(domain, token, bookmarksUrl, data).then(function() {
+    output.success({});
+  })
+
+};
+updatePickStatusData.async = true;
+updatePickStatusData.outputs = ['success', 'error'];
+
 function setRockLoc({input, state}) {
-  var location = {
+  var newLocation = {
     latitude: input.lat,
     longitude: input.lng,
   };
-  state.set(['app', 'model', 'rocks', input.id, 'location'], location);
+  state.set(['app', 'model', 'rocks', input.id, 'location'], newLocation);
 };
 
-function pushNewRock({input, state}) {
+function setSyncSent({input, state}) {
+  state.set(['app', 'model', 'rocks', input.id, 'sync_status'], "sent");
+};
+
+function setSynced({input, state}) {
+  state.set(['app', 'model', 'rocks', input.id, 'sync_status'], "synced");
+};
+
+function setFailed({input, state}) {
+  state.set(['app', 'model', 'rocks', input.id, 'sync_status'], "failed");
+};
+
+function updateLocationData({input, state, output}) {
+  console.log("!!!update new location!!!");
+  var token = state.get(['app', 'token']);
+  var domain = state.get(['app', 'model', 'domain']);
+  //var url = 'https://' + domain + '/resources/';
+  //var resourcesUrl = 'https://' + domain + '/resources/';
+  var bookmarksUrl = 'https://' + domain + '/bookmarks/rocks/list-index/'+input.id+'/';
+  //var syncUrl = 'https://' + domain + '/resources/' + input.id + '/sync_status/';  
+  var data = {
+    id: input.id,
+    update: {
+      location: {
+        latitude: input.lat,
+        longitude: input.lng
+      },
+    },
+  }
+  
+  return cache.put(domain, token, bookmarksUrl, data).then(function() {
+    output.success({});
+  })
+
+};
+updateLocationData.async = true;
+updateLocationData.outputs = ['success', 'error'];
+
+function pushNewRock({input, state, output}) {
   var id = uuid.v4();
   var currentLocState = state.get(['app', 'view', 'current_location_state']);
-  
+  //var obj;
+
   if (currentLocState == false) {
     var obj = {
       id: id,
-    	location: {
-         latitude: input.lat,
-         longitude: input.lng,
-       },
-       picked: false,
-       comments: '',
+        location: {
+          latitude: input.lat,
+          longitude: input.lng,
+        },
+      picked: false,
+      comments: '',
+      sync_status: 'new',
     };
   }
 
@@ -214,34 +363,138 @@ function pushNewRock({input, state}) {
     var obj = {
       id: id,
       location: {
-         latitude: currentLat,
-         longitude: currentLng,
-       },
-       picked: false,
-       comments: '',
+        latitude: currentLat,
+        longitude: currentLng,
+      },
+      picked: false,
+      comments: '',
+      sync_status: 'new',
     };
     var bounds = L.latLngBounds(mapBounds._southWest, mapBounds._northEast);
     var currentLocation = L.latLng(obj.location.latitude, obj.location.longitude);
-    console.log(bounds.contains(currentLocation));
+    //console.log(bounds.contains(currentLocation));
     if (bounds.contains(currentLocation)) {
     } else {
     	state.set(['app', 'model', 'map_center_location', 'lat'], obj.location.latitude);
     	state.set(['app', 'model', 'map_center_location', 'lng'], obj.location.longitude);
     	state.set(['app', 'view', 'current_location_toggle'], true);
     }
-
   }
   state.set(['app', 'model', 'rocks', id], obj);
+  output({newRock: obj, id: obj.id});
 };
+
+function updateNewRockData({input, state, output}) {
+  //console.log("update new rock object in server");
+  var token = state.get(['app', 'token']);
+  var domain = state.get(['app', 'model', 'domain']);
+//  var resourcesUrl = 'https://' + domain + '/resources/';
+  var bookmarksUrl = 'https://' + domain + '/bookmarks/rocks/list-index/' + input.id + '/';
+//  var testBookmarksUrl = 'https://' + domain + '/bookmarks/rocks/list-index/corn/index-test1/indiana/index-test2/' + input.id + '/';
+  var syncUrl = 'https://' + domain + '/resources/' + input.id + '/sync_status/';
+  //console.log('objKey: '+input.id);
+  return cache.put(domain, token, bookmarksUrl, input.newRock)
+  .then(function(res) {
+    console.log('Delete Call')
+    return cache.delete(token, syncUrl);
+  }).then(function() {
+    output.success({});
+  })
+};
+updateNewRockData.async = true;
+updateNewRockData.outputs = ['success', 'error'];
+
+/*
+
+function updateNewRockRes({input, state, output}) {
+  console.log("update new rock object in resources");
+  var token = state.get(['app', 'token']);
+  var domain = state.get(['app', 'model', 'domain']);
+  var url = 'https://' + domain + '/resources/';
+  //
+  var resourcesUrl = 'https://' + domain + '/resources/';
+  var bookmarksUrl = 'https://' + domain + '/bookmarks/rocks/list-index/';
+  cache.put(domain, token, resourcesUrl, bookmarksUrl, input.newRock);
+  //
+  agent.put(url + input.newRock.id, input.newRock)
+    .set('Authorization', 'Bearer '+ token)
+    .end()
+    .then(function(res) {
+      if (res.status == 200) {
+        output.success({});
+      } else {
+    	output.error({});
+        //keep "new" status
+      }
+    });
+  //DELETE sync_status in the server
+  agent('DELETE', url + input.newRock.id + '/sync_status/')
+    .set('Authorization', 'Bearer '+ token)
+    .end()
+    .then(function(res) {
+    });
+};
+updateNewRockRes.async = true;
+updateNewRockRes.outputs = ['success', 'error'];
+
+function updateNewRockBookmark({input, state, output}) {
+  console.log("update new rock object in bookmark");
+  var token = state.get(['app', 'token']);
+  var domain = state.get(['app', 'model', 'domain']);
+  var bookmarkUrl = 'https://' + domain + '/bookmarks/rocks/list-index/';
+  var obj = {
+    _id: input.newRock.id,
+    _rev: "0-0"
+  };
+  agent.put(bookmarkUrl + input.newRock.id, obj)
+    .set('Authorization', 'Bearer '+ token)
+    .end()
+    .then(function(res) {
+      if (res.status == 200) {
+      	output.success({});
+      } else {
+      	output.error({});
+        //keep "new" status
+      }
+    });
+};
+updateNewRockBookmark.async = true;
+updateNewRockBookmark.outputs = ['success', 'error'];
+
+*/
+
+function updateCommentData({input, state, output}) {
+  console.log("update comment data");
+  var token = state.get(['app', 'token']);
+  var domain = state.get(['app', 'model', 'domain']);
+  //var url = 'https://' + domain + '/resources/';
+  //var resourcesUrl = 'https://' + domain + '/resources/';
+  var bookmarksUrl = 'https://' + domain + '/bookmarks/rocks/list-index/' + input.id + '/';
+  var data = {
+    id: input.id,
+    update: {
+      comments: input.text,
+    }
+  };
+
+  return cache.put(domain, token, bookmarksUrl, data).then(function() {
+    output.success({});
+  })
+
+};
+updateCommentData.async = true;
+updateCommentData.outputs = ['success', 'error'];
 
 function getAvailableData({state, output}) {
   var token = state.get(['app', 'token']);
   var domain = state.get(['app', 'model', 'domain']);
   var url = 'https://' + domain + '/bookmarks/rocks/list-index/';
   var rocks = {};
+  //console.log(domain);
   cache.get(url, token).then(function(rocksIndex) {
+    //console.log(rocksIndex)
     return Promise.each(Object.keys(rocksIndex), function(key) {
-      return cache.get(url + key, token).then(function(rockItem) {
+      return cache.get(url + key + '/', token).then(function(rockItem) {
         return rocks[key] = rockItem;
       })
     })
@@ -258,10 +511,134 @@ function setAvailableData({input, state}) {
   })
 };
 
+function getSync({input, state, output}) {
+  var syncFailed = {};
+  var syncNew = {};
+  var rocksData = state.get(['app', 'model', 'rocks']);
+  //Use FILTER function!!!
+  /*
+  Object.keys(rocksData).forEach(function(id) {
+    if (rocksData[id].sync_status == "failed") {
+      syncFailed[id] = rocksData[id].sync_status;
+    }
+    if (rocksData[id].sync_status == "new") {
+      syncNew[id] = rocksData[id].sync_status;
+    }
+  })
+  */
+  syncFailed = _.filter(rocksData, ['sync_status', 'failed']);
+  syncNew = _.filter(rocksData, ['sync_status', 'new']);
+  output.success({syncFailed});
+  output.success({syncNew});
+  //console.log(syncFailed);
+  //console.log(syncNew);
+};
+getSync.outputs = ['success', 'error'];
+getSync.async = true;
+
+function setSyncFailedStatus({input, state}) {
+  state.set(['app', 'model', 'sync_failed'], input.syncFailed);
+  state.set(['app', 'model', 'sync_new'], input.syncNew);
+};
+
+function updateFailedData({input, state}) {
+  var token = state.get(['app', 'token']);
+  var domain = state.get(['app', 'model', 'domain']);
+  var resourcesUrl = 'https://' + domain + '/resources/';
+  var bookmarksUrl = 'https://' + domain + '/bookmarks/rocks/list-index/';
+  input.syncFailed.forEach(function(failedRock) {
+    cache.put(token, resourcesUrl, bookmarksUrl, failedRock.id, failedRock).then(function() {
+      var syncUrl = 'https://' + domain + '/resources/' + failedRock.id + '/sync_status/';
+      cache.delete(token, syncUrl).then(function() {
+        output.success({});
+      })
+    })
+
+/*
+    agent.put(resourceUrl + failedRock.id, failedRock)
+      .set('Authorization', 'Bearer '+ token)
+      .end()
+      .then(function(res) {
+        if (res.status == 200) {
+          state.set(['app', 'model', 'rocks', failedRock.id, 'sync_status'], "synced");
+        } else {
+          state.set(['app', 'model', 'rocks', failedRock.id, 'sync_status'], "failed");
+        }
+      });
+    //DELETE sync_status in each rock in the server
+    agent('DELETE', resourceUrl + failedRock.id + '/sync_status/')
+      .set('Authorization', 'Bearer '+ token)
+      .end()
+      .then(function(res) {
+      });
+
+*/
+
+  })
+
+};
+updateFailedData.outputs = ['success', 'error'];
+updateFailedData.async = true;
+
+function updateFailedNewRocks({input, state}) {
+  var token = state.get(['app', 'token']);
+  var domain = state.get(['app', 'model', 'domain']);
+  var resourcesUrl = 'https://' + domain + '/resources/';
+  var bookmarksUrl = 'https://' + domain + '/bookmarks/rocks/list-index/';
+  //PUT new rock to resources and bookmark if not synced yet
+  if (input.syncNew) {
+    console.log("PUT new rock to bookmark!!!")
+    input.syncNew.forEach(function(newRock) {
+      cache.put(token, resourcesUrl, bookmarksUrl, newRock.id, newRock).then(function() {
+        var syncUrl = 'https://' + domain + '/resources/' + newRock.id + '/sync_status/';
+        cache.delete(token, syncUrl).then(function() {
+          output.success({});
+        })
+      })
+
+/*
+      agent.put(resourceUrl + newRock.id, newRock)
+        .set('Authorization', 'Bearer '+ token)
+        .end()
+        .then(function(res) {
+          if (res.status == 200) {
+            state.set(['app', 'model', 'rocks', newRock.id, 'sync_status'], "synced");
+          } else {
+            state.set(['app', 'model', 'rocks', newRock.id, 'sync_status'], "failed");
+          }
+        });
+      //DELETE sync_status in each rock in the server
+      agent('DELETE', resourceUrl + newRock.id + '/sync_status/')
+        .set('Authorization', 'Bearer '+ token)
+        .end()
+        .then(function(res) {
+        });
+
+    var obj = {
+      _id: newRock.id,
+      _rev: "0-0"
+    };
+    agent.put(bookmarkUrl + newRock.id, obj)
+      .set('Authorization', 'Bearer '+ token)
+      .end()
+      .then(function(res) {
+        if (res.status == 200) {
+          state.set(['app', 'model', 'rocks', newRock.id, 'sync_status'], "synced");
+        } else {
+          state.set(['app', 'model', 'rocks', newRock.id, 'sync_status'], "failed");
+        }
+      });
+*/
+
+    })
+  }
+};
+updateFailedNewRocks.outputs = ['success', 'error'];
+updateFailedNewRocks.async = true;
+
 function getOadaDomain({state, output}) {
   //First, check if the domain is already in the cache;
-  var db = new PouchDB('TheRockApp');
-  db.get('domain').then(function(result) {
+  db().get('domain').then(function(result) {
     if (result.doc.domain.indexOf('offline') > 0) {
       output.offline({}); //In cache, but not connected to server for now
     } else {
@@ -278,8 +655,7 @@ getOadaDomain.async = true;
 
 function setOadaDomain({input, state}) {
   state.set(['app', 'model', 'domain'], input.value);
-  var db = new PouchDB('TheRockApp');
-  db.put({
+  db().put({
     doc: {domain: input.value},
     _id: 'domain',
   }).catch(function(err) {
@@ -288,8 +664,7 @@ function setOadaDomain({input, state}) {
 };
 
 function destroyCache() {
-  var db = new PouchDB('TheRockApp');
-  db.destroy();
+  db().destroy();
 };
 
 function registerGeohashes({input, state}) {
@@ -309,8 +684,7 @@ function unregisterGeohashes({input, state}) {
 
 function getToken({input, state, output}) {
   var self = this;
-  var db = new PouchDB('TheRockApp');
-  db.get('token').then(function(result) {
+  db().get('token').then(function(result) {
     output.success({token:result.doc.token});
   }).catch(function(err) { //not in Pouch, prompt for user sign in
     if (err.status !== 404) console.log(err);
@@ -330,8 +704,7 @@ getToken.outputs = ['success', 'error'];
 getToken.async = true;
 
 function storeToken({input, state}) {
-  var db = new PouchDB('TheRockApp');
-  db.put({
+  db().put({
     doc: {token: input.token},
     _id: 'token',
   }).catch(function(err) {

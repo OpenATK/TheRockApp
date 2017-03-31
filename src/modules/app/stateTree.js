@@ -18,6 +18,8 @@ var stateTree = {
     selected_key: {},
     map_bounds: {},
     comment_input: '',
+    sync_failed: {},
+    sync_new: {},
   },
   view: {
     rock_pick_state: false,
