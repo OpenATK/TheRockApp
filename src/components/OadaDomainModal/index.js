@@ -1,14 +1,14 @@
 import React from 'react';
-import { connect } from 'cerebral-view-react';
+import { connect } from 'cerebral/react';
 import styles from './styles.css';
+import {state, signal} from 'cerebral/tags';
 
 export default connect({
-  text: 'app.view.domain_modal.text',
-  visible: 'app.view.domain_modal.visible',
-}, {
-  textChanged: 'app.domainTextChanged',
-  domainSubmitClicked: 'app.domainSubmitClicked',
-  domainCancelClicked: 'app.domainCancelClicked',
+  text: state`app.view.domain_modal.text`,
+  visible: state`app.view.domain_modal.visible`,
+  textChanged: signal`app.domainTextChanged`,
+  domainSubmitClicked: signal`app.domainSubmitClicked`,
+  domainCancelClicked: signal`app.domainCancelClicked`,
 },
 
 class OadaDomainModal extends React.Component {

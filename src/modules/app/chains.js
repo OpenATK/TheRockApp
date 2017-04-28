@@ -1,26 +1,77 @@
 import uuid from 'uuid';
 import request from 'superagent';
 import _ from 'lodash';
-import geolib from 'geolib';
 import md5 from 'md5';
 import oadaIdClient from 'oada-id-client';
 import { Promise } from 'bluebird';  
 var agent = require('superagent-promise')(require('superagent'), Promise);
 import PouchDB from 'pouchdb';
-import cache from './cache.js';
 import { LatLngBounds } from 'react-leaflet';
-import { set, unset, copy, toggle } from 'cerebral/operators';
-import db from '../Cache'
+import { set, unset, toggle } from 'cerebral/operators';
+import { props, state } from 'cerebral/tags'
+import db from '../Cache';
+import oadaCache from './cache.js';
+import cerebralCache from './cerebralCache.js';
+var pointer = require('json-pointer');
+
+//var cerebralPath;
+
+// Define tree structure for the oada server setup
+var tree = {
+  rocks: {
+    _type: 'application/vnd.oada.rocks.1+json',
+    'list-index': {
+      '*': {
+      },
+    },
+  },
+  //testthree: {
+    // 'list-index': {
+    //   'indiana':{},
+    //   'michigan':{}
+    // }
+  //},
+};
+
+// var tree = {
+//   testone: {
+//     _type: 'application/vnd.oada.rocks.1+json',
+//     'list-index': {
+//       corn: {
+//         testtwo: {
+//           '*': {},
+//         }
+//       },
+//       beans: {
+//         testtwo: {
+//           '*': {},
+//         }
+//       },
+//       wheat: {
+//         testtwo: {
+//           '*': {}, 
+//         }
+//       },
+//     },
+//   },
+//   testthree: {
+//     'list-index': {
+//       'indiana':{},
+//       'michigan':{}
+//     }
+//   }
+// };
 
 var getRockData = [
   getToken, {
     success: [
       storeToken,
-      setupOadaServer,
-      getAvailableData, {
-        success: [setAvailableData],
-        error: [],
-      },
+      set(props`cerebralPrefix`, ['app', 'oada-cache', 'bookmarks']),
+      set(props`tree`, tree),
+      cerebralCache.setup,  //setupOadaServer,
+      //set(props`path`, 'rocks.list-index')
+      cerebralCache.get,
+//      setCerebralPath,
     ], 
     error: [],
   },
@@ -33,11 +84,11 @@ var getSyncStatus = [
       updateFailedData, {
         success: [
           updateFailedNewRocks, {
-            success: [setSynced],
-            error: [setFailed],
+            success: [set(state`app.model.rocks.${props`id`}.sync_status`, 'synced')],
+            error: [set(state`app.model.rocks.${props`id`}.sync_status`, 'failed')],
           },
         ],
-        error: [setFailed],
+        error: [set(state`app.model.rocks.${props`id`}.sync_status`, 'failed')],
       },
     ],
     error: [],
@@ -46,9 +97,100 @@ var getSyncStatus = [
 
 export var initialize = [
   getOadaDomain, {
-    cached: [setOadaDomain, hideDomainModal, getRockData, getSyncStatus],
+    cached: [
+      setOadaDomain,
+      set(state`app.view.domain_modal.visible`, false),
+      getRockData,
+      // getSyncStatus
+    ],
     offline: [],
   },
+];
+
+// generateNewID, 
+// chain: oadaPut, (input.statepath (Optional), input.url, input.content),
+//   set('app.model.rocks.data.id', data)
+export var addRockLoc = [
+  createNewRock, // Since generating new ID in cerebralCache, content does not contain id now
+  createNewRockUrl,  //domain/bookmarks/rocks/list-index/
+  ...[cerebralCache.post],
+  // oadaPut, {
+  // 	success: [
+  // 	  setRockToState('app.model.rocks'),  //optional statePath
+  //     set(state`app.model.rocks.${props`id`}.sync_status`, 'synced'),
+  // 	],
+  // 	error: [],
+  // },
+];
+
+export var setNewRockLoc = [
+  setRockLoc,
+  set(state`app.oada-cache.bookmarks.rocks.list-index.${props`id`}.sync_status`, 'sent'),
+  createNewLocation,
+  ...[cerebralCache.put],
+];
+
+export var setRockPicked = [
+  setPicked,
+  createNewPickStatus,
+  ...[cerebralCache.put],
+];
+
+export var hidePickedMarker = [
+  toggle(state`app.view.show_all_rocks`),
+];
+
+export var getCurrentLocation = [
+  setCurrentLocation,
+];
+
+export var showCurrentLocation = [
+  setMapLocation,
+];
+
+export var getMapCenter = [
+  setMapCenter,
+  set(state`app.model.map_bounds`, props`bounds`),
+  set(state`app.view.marker_edit_mode`, false),
+];
+
+export var initSetMapCenter = [
+  setMapCenter,
+];
+
+export var showEdit = [
+  set(state`app.view.marker_edit_mode`, true),
+  set(state`app.model.selected_key`, props`id`),
+  setRockComment,
+];
+
+export var setBounds = [
+  set(state`app.model.map_bounds`, props`bounds`),
+];
+
+export var inputTextChanged = [
+  set(state`app.model.comment_input`, props`value`),
+];
+
+export var addCommentText = [
+  set(state`app.oada-cache.bookmarks.rocks.list-index.${props`id`}.comments`, props`text`),
+  set(state`app.oada-cache.bookmarks.rocks.list-index.${props`id`}.sync_status`, 'sent'),
+  createNewComment,
+  ...[cerebralCache.put],
+];
+
+export var deleteRock = [
+  ...[cerebralCache.delete],
+  set(state`app.view.marker_edit_mode`, false),
+];
+
+export var displayDomainModal = [
+  set(state`app.view.domain_modal.visible`, true),
+];
+
+export var updateRockData = [
+  // sync button
+  getSyncStatus,
 ];
 
 export var removeGeohashes = [
@@ -64,168 +206,154 @@ export var clearCache = [
 ];
 
 export var submitDomainModal = [
-  setOadaDomain, hideDomainModal, getRockData,
+  setOadaDomain,
+  set(state`app.view.domain_modal.visible`, false),
+  getRockData,
 ];
 
 export var cancelDomainModal = [
-  setOadaDomain, hideDomainModal,
+  setOadaDomain,
+  set(state`app.view.domain_modal.visible`, false),
 ];
 
 export var updateDomainText = [
-  setDomainText,
+  set(state`app.view.domain_modal.text`, props`value`),
 ];
 
-export var addRockLoc = [
-  pushNewRock,
-  updateNewRockData, {
-  	success: [setSynced],
-    error: [], //keep 'new' status
-  },
-];
-
-export var setNewRockLoc = [
-  setRockLoc,
-  setSyncSent,
-  updateLocationData, {
-    success: [setSynced],
-    error: [setFailed],
-  },
-];
-
-export var setRockPicked = [
-  setPicked,
-  setSyncSent,
-  updatePickStatusData, {
-  	success: [setSynced],
-    error: [setFailed],
-  },
-];
-
-export var hidePickedMarker = [
-  toggleShowRock,
-];
-
-export var getCurrentLocation = [
-  setCurrentLocation,
-];
-
-export var showCurrentLocation = [
-  setMapLocation,
-];
-
-export var getMapCenter = [
-  setMapCenter, updateBounds, hideEditPanel,
-];
-
-export var showEdit = [
-  showEditPanel, setRockComment,
-];
-
-export var setBounds = [
-  updateBounds,
-];
-
-export var inputTextChanged = [
-  setInputValue,
-];
-
-export var addCommentText = [
-  addCommentRock,
-  setSyncSent,
-  updateCommentData, {
-  	success: [setSynced],
-  	error: [setFailed],
-  },
-];
-
-export var deleteRock = [
-  setSyncSent,
-  deleteRockDataRes, {
-  	success: [
-  	  deleteRockDataBookmark, {
-  	    success: [setSynced, removeRock],
-  	    error: [setFailed],
-  	  },
-  	],
-  	error: [setFailed],
-  },
-  hideEditPanel,
-];
-
-export var displayDomainModal = [
-  showDomainModal,
-];
-
-export var updateRockData = [
-  // sync button
-  getSyncStatus,
-];
-
-function setupOadaServer({input, state}) {
-  var token = state.get(['app', 'token']);
-  var domain = state.get(['app', 'model', 'domain']);
-  return cache.setup(domain, token);
-};
-
-function removeRock({input, state}) {
-  state.unset(['app', 'model', 'rocks', input.id]);
-};
-
-function deleteRockDataRes({input, state, output}) {
-  console.log("delete rock resources in the server");
-  var token = state.get(['app', 'token']);
-  var domain = state.get(['app', 'model', 'domain']);
-  var url = 'https://' + domain + '/resources/' + input.id + '/';
-
-  return cache.delete(token, url).then(function() {
-    output.success({});
+function getToken({props, state, path}) {
+  var self = this;
+  return db().get('token').then(function(result) {
+  	//console.log('found token in pouch')
+    return path.success({token:result.doc.token});
+  }).catch(function(err) { //not in Pouch, prompt for user sign in
+  	//console.log('token not in pouch')
+    if (err.status !== 404) console.log(err);
+    var options = {
+      metadata: 'eyJqa3UiOiJodHRwczovL2lkZW50aXR5Lm9hZGEtZGV2LmNvbS9jZXJ0cyIsImtpZCI6ImtqY1NjamMzMmR3SlhYTEpEczNyMTI0c2ExIiwidHlwIjoiSldUIiwiYWxnIjoiUlMyNTYifQ.eyJyZWRpcmVjdF91cmlzIjpbImh0dHBzOi8vdHJpYWxzdHJhY2tlci5vYWRhLWRldi5jb20vb2F1dGgyL3JlZGlyZWN0Lmh0bWwiLCJodHRwOi8vbG9jYWxob3N0OjgwMDAvb2F1dGgyL3JlZGlyZWN0Lmh0bWwiXSwidG9rZW5fZW5kcG9pbnRfYXV0aF9tZXRob2QiOiJ1cm46aWV0ZjpwYXJhbXM6b2F1dGg6Y2xpZW50LWFzc2VydGlvbi10eXBlOmp3dC1iZWFyZXIiLCJncmFudF90eXBlcyI6WyJpbXBsaWNpdCJdLCJyZXNwb25zZV90eXBlcyI6WyJ0b2tlbiIsImlkX3Rva2VuIiwiaWRfdG9rZW4gdG9rZW4iXSwiY2xpZW50X25hbWUiOiJUcmlhbHMgVHJhY2tlciIsImNsaWVudF91cmkiOiJodHRwczovL2dpdGh1Yi5jb20vT3BlbkFUSy9UcmlhbHNUcmFja2VyIiwiY29udGFjdHMiOlsiU2FtIE5vZWwgPHNhbm9lbEBwdXJkdWUuZWR1PiJdLCJzb2Z0d2FyZV9pZCI6IjVjYzY1YjIwLTUzYzAtNDJmMS05NjRlLWEyNTgxODA5MzM0NCIsInJlZ2lzdHJhdGlvbl9wcm92aWRlciI6Imh0dHBzOi8vaWRlbnRpdHkub2FkYS1kZXYuY29tIiwiaWF0IjoxNDc1NjA5NTkwfQ.Qsve_NiyQHGf_PclMArHEnBuVyCWvH9X7awLkO1rT-4Sfdoq0zV_ZhYlvI4QAyYSWF_dqMyiYYokeZoQ0sJGK7ZneFwRFXrVFCoRjwXLgHKaJ0QfV9Viaz3cVo3I4xyzbY4SjKizuI3cwfqFylwqfVrffHjuKR4zEmW6bNT5irI',
+      scope: 'rocks',
+        "redirect": 'http://localhost:8000/oauth2/redirect.html',
+    };
+    var domain = state.get(['app', 'model', 'domain']);
+    //console.log('firing oada login')
+    return new Promise((resolve,reject) => {
+    	oadaIdClient.getAccessToken(domain, options, function(err, accessToken) {
+    	  //console.log('returned from oada')
+        if (err) { console.dir(err); resolve(path.error()); } // Something went wrong  
+        resolve(path.success({token:accessToken.access_token}));
+      })
+    });
   })
 };
-deleteRockDataRes.async = true;
-deleteRockDataRes.outputs = ['success', 'error'];
 
-function deleteRockDataBookmark({input, state, output}) {
-  console.log("delete rock bookmark in the server");
+// function setCerebralPath({props, state}) {
+//   console.log('setCerebralPath')
+//   cerebralPath = props.cerebralPath;
+//   console.log(cerebralPath)
+// };
+
+function storeToken({props, state}) {
+  db().put({
+    doc: {token: props.token},
+    _id: 'token',
+  }).catch(function(err) {
+    if (err.status !== 409) throw err;
+  });
+  state.set(['app', 'token'], props.token);
+  state.set('app.offline', false);
+};
+
+function setupOadaServer({state}) {
   var token = state.get(['app', 'token']);
   var domain = state.get(['app', 'model', 'domain']);
-  var url = 'https://' + domain + '/bookmarks/rocks/list-index/' + input.id + '/';
-  return cache.delete(token, url).then(function() {
-    output.success({});
+  //var cerebralPath = ['app', 'model'];
+  //var oadaPath = '/bookmarks/';
+  //return cache.setup(domain, token);
+  return oadaCache.setup(domain, token, tree);
+};
+
+function getAvailableData({state, path}) {
+  var token = state.get(['app', 'token']);
+  var domain = state.get(['app', 'model', 'domain']);
+  var url = 'https://' + domain + '/bookmarks/rocks/list-index/';
+	var objData = {};
+	return oadaCache.get(url, token).then(function(objIndex) {
+    return Promise.map(Object.keys(objIndex), function(key) {
+      return oadaCache.get(url + key + '/', token).then(function(objItem) {
+        return objData[key] = objItem;
+      })
+    })
+  }).then(function() {
+  	return path.success({objData})
+  }).catch(function(err) {
+  	console.log(err)
+  	return err;
   })
 };
-deleteRockDataBookmark.async = true;
-deleteRockDataBookmark.outputs = ['success', 'error'];
 
-function setRockComment({input, state}) {
-  var selectedRockComment = state.get(['app', 'model', 'rocks', input.id, 'comments']);
+function setAvailableData({props, state, path}) {
+	Object.keys(props.objData).forEach(function(objKey) {
+    state.set(['app', 'model', 'rocks', objKey], props.objData[objKey]);
+  })
+};
+
+// function deleteRockDataRes({props, state, path}) {
+// 	console.log("delete rock resources in the server");
+//   var token = state.get(['app', 'token']);
+//   var domain = state.get(['app', 'model', 'domain']);
+//   var url = 'https://' + domain + '/resources/' + props.id + '/';
+//   return oadaCache.delete(token, url).then(function() {
+//     return path.success({});
+//   }).catch(function(err) {
+//   	console.log(err)
+//   	return err;
+//   })
+// };
+
+// function deleteRockDataBookmark({props, state, path}) {
+//   console.log("delete rock bookmark in the server");
+//   var token = state.get(['app', 'token']);
+//   var domain = state.get(['app', 'model', 'domain']);
+//   var url = 'https://' + domain + '/bookmarks/rocks/list-index/' + props.id + '/';
+//   return oadaCache.delete(token, url).then(function() {
+//     return path.success({});
+//   }).catch(function(err) {
+//   	console.log(err)
+//   	return err;
+//   })
+// };
+
+function setRockComment({props, state}) {
+  var selectedRockComment = state.get(['app', 'oada-cache','bookmarks', 'rocks', 'list-index', props.id, 'comments']);
   state.set(['app', 'model', 'comment_input'], selectedRockComment);
 };
 
-function addCommentRock({input, state}) {
-  state.set(['app', 'model', 'rocks', input.id, 'comments'], input.text);
-};
+// function addCommentRock({props, state}) {
+//   state.set(['app', 'model', 'rocks', props.id, 'comments'], props.text);
+// };
 
-function setInputValue({input, state}) {
-  state.set(['app', 'model', 'comment_input'], input.value);
-};
+// function setInputValue({props, state}) {
+//   state.set(['app', 'model', 'comment_input'], props.value);
+// };
 
-function updateBounds({input, state}) {
-  state.set(['app', 'model', 'map_bounds'], input.bounds);
-};
+// function updateBounds({props, state}) {
+//   state.set(['app', 'model', 'map_bounds'], props.bounds);
+// };
 
-function showEditPanel({input, state}) {
-  state.set(['app', 'view', 'marker_edit_mode'], true);
-  state.set(['app', 'model', 'selected_key'], input.id);
-};
+// function showEditPanel({props, state}) {
+//   state.set(['app', 'view', 'marker_edit_mode'], true);
+//   state.set(['app', 'model', 'selected_key'], props.id);
+// };
 
-function hideEditPanel({state}) {
-  state.set(['app', 'view', 'marker_edit_mode'], false);
-};
+// function hideEditPanel({state}) {
+//   state.set(['app', 'view', 'marker_edit_mode'], false);
+// };
 
-function setMapCenter({input, state}) {
+function setMapCenter({props, state}) {
+  //console.log('setMapCenter')
+  //console.log(props)
   var obj = {
-    lat: input.lat,
-    lng: input.lng,
+    lat: props.lat,
+    lng: props.lng,
   }
   state.set(['app', 'model', 'map_center_location'], obj);
 };
@@ -243,21 +371,21 @@ function setMapLocation({state}) {
   }
 };
 
-function setCurrentLocation({input, state}) {
+function setCurrentLocation({props, state}) {
   var obj = {
-    lat: input.lat,
-    lng: input.lng,
+    lat: props.lat,
+    lng: props.lng,
   }
   state.set(['app', 'model', 'current_location'], obj);
   state.set(['app', 'view', 'current_location_state'], true);
 };
 
-function toggleShowRock({state}) {
-  var showAll = state.get(['app', 'view', 'show_all_rocks']);
-  state.set(['app', 'view', 'show_all_rocks'], !showAll);
-};
+// function toggleShowRock({state}) {
+//   var showAll = state.get(['app', 'view', 'show_all_rocks']);
+//   state.set(['app', 'view', 'show_all_rocks'], !showAll);
+// };
 
-function setPicked({state, output}) {
+function setPicked({state, path}) {
   var selectedRock = state.get(['app', 'model', 'selected_key']);
   var picked = state.get(['app', 'model', 'rocks', selectedRock, 'picked']);
   if (!picked) {
@@ -267,89 +395,73 @@ function setPicked({state, output}) {
     state.set(['app', 'model', 'rocks', selectedRock, 'picked'], false);
     state.set(['app', 'view', 'rock_pick_state'], false);
   };
-  output({id: selectedRock});
+  return {id: selectedRock}
 };
 
-function updatePickStatusData({input, state, output}) {
+function createNewPickStatus({props, state, path}) {
   console.log("sync pick status");
-  var token = state.get(['app', 'token']);
-  var domain = state.get(['app', 'model', 'domain']);
-  //var url = 'https://' + domain + '/resources/';
-  //var resourcesUrl = 'https://' + domain + '/resources/';
-  var bookmarksUrl = 'https://' + domain + '/bookmarks/rocks/list-index/' + input.id + '/';
-  var picked = state.get(['app', 'model', 'rocks', input.id, 'picked']);
+  var picked = state.get(['app', 'model', 'rocks', props.id, 'picked']);
   var data = {
-    id: input.id,
+    id: props.id,
     update: {
       picked: picked,
     }
   };
-  return cache.put(domain, token, bookmarksUrl, data).then(function() {
-    output.success({});
-  })
-
+  return {content: data}
 };
-updatePickStatusData.async = true;
-updatePickStatusData.outputs = ['success', 'error'];
 
-function setRockLoc({input, state}) {
+function setRockLoc({props, state}) {
+  //console.log(props.lat)
   var newLocation = {
-    latitude: input.lat,
-    longitude: input.lng,
+    latitude: props.lat,
+    longitude: props.lng,
   };
-  state.set(['app', 'model', 'rocks', input.id, 'location'], newLocation);
+  //state.set(['app', 'model', 'rocks', props.id, 'location'], newLocation);
+  state.set(['app', 'oada-cache', 'bookmarks', 'rocks', 'list-index', props.id, 'location'], newLocation);
 };
 
-function setSyncSent({input, state}) {
-  state.set(['app', 'model', 'rocks', input.id, 'sync_status'], "sent");
+/*
+function setSyncSent({props, state}) {
+  state.set(['app', 'model', 'rocks', props.id, 'sync_status'], "sent");
 };
 
-function setSynced({input, state}) {
-  state.set(['app', 'model', 'rocks', input.id, 'sync_status'], "synced");
+function setSynced({props, state}) {
+  state.set(['app', 'model', 'rocks', props.id, 'sync_status'], "synced");
 };
 
-function setFailed({input, state}) {
-  state.set(['app', 'model', 'rocks', input.id, 'sync_status'], "failed");
+function setFailed({props, state}) {
+  state.set(['app', 'model', 'rocks', props.id, 'sync_status'], "failed");
 };
+*/
 
-function updateLocationData({input, state, output}) {
+function createNewLocation({props, state, path}) {
   console.log("!!!update new location!!!");
-  var token = state.get(['app', 'token']);
-  var domain = state.get(['app', 'model', 'domain']);
-  //var url = 'https://' + domain + '/resources/';
-  //var resourcesUrl = 'https://' + domain + '/resources/';
-  var bookmarksUrl = 'https://' + domain + '/bookmarks/rocks/list-index/'+input.id+'/';
-  //var syncUrl = 'https://' + domain + '/resources/' + input.id + '/sync_status/';  
   var data = {
-    id: input.id,
+    id: props.id,
     update: {
       location: {
-        latitude: input.lat,
-        longitude: input.lng
+        latitude: props.lat,
+        longitude: props.lng
       },
     },
   }
-  
-  return cache.put(domain, token, bookmarksUrl, data).then(function() {
-    output.success({});
-  })
-
+  return {content: data}
 };
-updateLocationData.async = true;
-updateLocationData.outputs = ['success', 'error'];
 
-function pushNewRock({input, state, output}) {
-  var id = uuid.v4();
+// function generateNewId({state, path}) {
+// 	var id = uuid.v4();
+// 	return {id}
+// };
+
+function createNewRock({props, state, path}) {
   var currentLocState = state.get(['app', 'view', 'current_location_state']);
-  //var obj;
-
   if (currentLocState == false) {
     var obj = {
-      id: id,
-        location: {
-          latitude: input.lat,
-          longitude: input.lng,
-        },
+      //id: props.id,
+      location: {
+        latitude: props.lat,
+        longitude: props.lng,
+      },
       picked: false,
       comments: '',
       sync_status: 'new',
@@ -359,7 +471,7 @@ function pushNewRock({input, state, output}) {
     var currentLat = state.get(['app', 'model', 'current_location', 'lat']); 
     var currentLng = state.get(['app', 'model', 'current_location', 'lng']);
     var obj = {
-      id: id,
+      //id: props.id,
       location: {
         latitude: currentLat,
         longitude: currentLng,
@@ -377,144 +489,146 @@ function pushNewRock({input, state, output}) {
       state.set(['app', 'view', 'current_location_toggle'], true);
     }
   }
-  state.set(['app', 'model', 'rocks', id], obj);
-  output({newRock: obj, id: obj.id});
+  return {content: obj}
 };
 
-function updateNewRockData({input, state, output}) {
-  var token = state.get(['app', 'token']);
+function createNewRockUrl({props, state, path}) {
   var domain = state.get(['app', 'model', 'domain']);
-  var bookmarksUrl = 'https://' + domain + '/bookmarks/rocks/list-index/' + input.id + '/';
-//  var testBookmarksUrl = 'https://' + domain + '/bookmarks/rocks/list-index/corn/index-test1/indiana/index-test2/' + input.id + '/';
-  var syncUrl = 'https://' + domain + '/resources/' + input.id + '/sync_status/';
-  return cache.put(domain, token, bookmarksUrl, input.newRock).then(function(res) {
-    return cache.delete(token, syncUrl);
-  }).then(function() {
-    output.success({});
-  })
-};
-updateNewRockData.async = true;
-updateNewRockData.outputs = ['success', 'error'];
+	var bookmarksUrl = 'https://' + domain + '/bookmarks/rocks/list-index/';
+	return {bookmarksUrl}
+}
 
-function updateCommentData({input, state, output}) {
+
+// state = {a:{}}
+// //What you can't do:
+// state.set('a.b.c.d', 10)
+// // I think this works, because you're only going one layer deeper 
+// state.set('a.b': {c:10})
+// var tempA = state.get('a') // {}
+// tempA.a = {c:{d:10}}
+// state.set('a', tempA)
+
+//url should be e.g., '/bookmarks/rocks/list-index/'
+// function urlToPath(url) {
+//   var pieces = url.split('/')
+//   pieces.splice(0,2)
+//   pieces.splice(pieces.length-1, 1)
+//   pieces.join('.')
+//   pieces
+// }
+
+// assume url defines as /bookmarks/rocks/list-index/
+// function getPathFromUrl({props, state, path}) {
+//   var pathPrefix = ['app', 'model'];
+//   var pathStr = props.url.slice(8+props.domain.length, -1);
+//   var pathArray = pointer.parse(pathStr);
+//   pathArray.splice(0, 1);  //remove bookmarks
+//   pathArray.splice(1, 1);  //remove list-index
+//   var statePath = pathPrefix.concat(pathArray);
+//   console.log(statePath)
+// 	return {defaultStatePath: statePath} //[app, model, rocks, id]
+// }
+
+// function oadaPut({props, state, path}) {
+// 	console.log(props.url)
+// 	return oadaCache.put(props.domain, props.token, props.url, props.content, tree).then(function() {
+//     return path.success();
+//   }).catch(function(err) {
+//   	console.log(err)
+//   	return err;
+//   })
+// };
+
+function createNewComment({props, state, path}) {
   console.log("update comment data");
-  var token = state.get(['app', 'token']);
-  var domain = state.get(['app', 'model', 'domain']);
-  var bookmarksUrl = 'https://' + domain + '/bookmarks/rocks/list-index/' + input.id + '/';
   var data = {
-    id: input.id,
+    id: props.id,
     update: {
-      comments: input.text,
+      comments: props.text,
     }
   };
-  return cache.put(domain, token, bookmarksUrl, data).then(function() {
-    output.success({});
-  })
-
-};
-updateCommentData.async = true;
-updateCommentData.outputs = ['success', 'error'];
-
-function getAvailableData({state, output}) {
-  var token = state.get(['app', 'token']);
-  var domain = state.get(['app', 'model', 'domain']);
-  var url = 'https://' + domain + '/bookmarks/rocks/list-index/';
-  var rocks = {};
-  return cache.get(url, token).then(function(rocksIndex) {
-    return Promise.each(Object.keys(rocksIndex), function(key) {
-      return cache.get(url + key + '/', token).then(function(rockItem) {
-        return rocks[key] = rockItem;
-      })
-    })
-  }).then(function() {
-    output.success({rocks});
-  })
-}
-getAvailableData.outputs = ['success', 'error'];
-getAvailableData.async = true;
-
-function setAvailableData({input, state}) {
-  Object.keys(input.rocks).forEach(function(rock) {
-  	state.set(['app', 'model', 'rocks', rock], input.rocks[rock]);
-  })
+  return {content: data}
 };
 
-function getSync({input, state, output}) {
+function getSync({props, state, path}) {
   var syncFailed = {};
   var syncNew = {};
   var rocksData = state.get(['app', 'model', 'rocks']);
   syncFailed = _.filter(rocksData, ['sync_status', 'failed']);
   syncNew = _.filter(rocksData, ['sync_status', 'new']);
-  output.success({syncFailed});
-  output.success({syncNew});
-};
-getSync.outputs = ['success', 'error'];
-getSync.async = true;
-
-function setSyncFailedStatus({input, state}) {
-  state.set(['app', 'model', 'sync_failed'], input.syncFailed);
-  state.set(['app', 'model', 'sync_new'], input.syncNew);
+  return path.success({syncFailed:syncFailed, syncNew:syncNew});
 };
 
-function updateFailedData({input, state}) {
+function setSyncFailedStatus({props, state}) {
+  state.set(['app', 'model', 'sync_failed'], props.syncFailed);
+  state.set(['app', 'model', 'sync_new'], props.syncNew);
+};
+
+function updateFailedData({props, state}) {
   var token = state.get(['app', 'token']);
   var domain = state.get(['app', 'model', 'domain']);
   var resourcesUrl = 'https://' + domain + '/resources/';
   var bookmarksUrl = 'https://' + domain + '/bookmarks/rocks/list-index/';
-  input.syncFailed.forEach(function(failedRock) {
+  props.syncFailed.forEach(function(failedRock) {
     return cache.put(token, resourcesUrl, bookmarksUrl, failedRock.id, failedRock).then(function() {
       var syncUrl = 'https://' + domain + '/resources/' + failedRock.id + '/sync_status/';
       return cache.delete(token, syncUrl).then(function() {
-        output.success({});
+        return path.success({});
+      }).catch(function(err) {
+      	console.log(err)
+      	return err;
       })
+    }).catch(function(err) {
+    	console.log(err)
+    	return err;
     })
   })
 };
-updateFailedData.outputs = ['success', 'error'];
-updateFailedData.async = true;
 
-function updateFailedNewRocks({input, state}) {
+function updateFailedNewRocks({props, state, path}) {
   var token = state.get(['app', 'token']);
   var domain = state.get(['app', 'model', 'domain']);
   var resourcesUrl = 'https://' + domain + '/resources/';
   var bookmarksUrl = 'https://' + domain + '/bookmarks/rocks/list-index/';
   //PUT new rock to resources and bookmark if not synced yet
-  if (input.syncNew) {
+  if (props.syncNew) {
     console.log("PUT new rock to bookmark!!!")
-    input.syncNew.forEach(function(newRock) {
+    props.syncNew.forEach(function(newRock) {
       return cache.put(token, resourcesUrl, bookmarksUrl, newRock.id, newRock).then(function() {
         var syncUrl = 'https://' + domain + '/resources/' + newRock.id + '/sync_status/';
         return cache.delete(token, syncUrl).then(function() {
-          output.success({});
-        })
-      })
+          return path.success({});
+        }).catch(function(err) {
+		    	console.log(err)
+		    	return err;
+		    })
+      }).catch(function(err) {
+	    	console.log(err)
+	    	return err;
+	    })
     })
   }
 };
-updateFailedNewRocks.outputs = ['success', 'error'];
-updateFailedNewRocks.async = true;
 
-function getOadaDomain({state, output}) {
+function getOadaDomain({state, path}) {
   //First, check if the domain is already in the cache;
-  db().get('domain').then(function(result) {
+  return db().get('domain').then(function(result) {
     if (result.doc.domain.indexOf('offline') > 0) {
-      output.offline({}); //In cache, but not connected to server for now
+      return path.offline({}); //In cache, but not connected to server for now
     } else {
-      output.cached({value: result.doc.domain});//In cache, use it. 
+      return path.cached({value: result.doc.domain});//In cache, use it. 
     }
   }).catch(function(err) {
     console.log(err);
     if (err.status !== 404) throw err;
-    output.offline({});//Don't have it yet, prompt for it. 
+    return path.offline({});//Don't have it yet, prompt for it. 
   })
 };
-getOadaDomain.outputs = ['cached', 'offline'];
-getOadaDomain.async = true;
 
-function setOadaDomain({input, state}) {
-  state.set(['app', 'model', 'domain'], input.value);
+function setOadaDomain({props, state}) {
+  state.set(['app', 'model', 'domain'], props.value);
   db().put({
-    doc: {domain: input.value},
+    doc: {domain: props.value},
     _id: 'domain',
   }).catch(function(err) {
     if (err.status !== 409) throw err;
@@ -525,63 +639,29 @@ function destroyCache() {
   return db().destroy();
 };
 
-function registerGeohashes({input, state}) {
+function registerGeohashes({props, state}) {
 // This case occurs before a token is available. Just save all geohashes and
 // filter them later with filterGeohashesOnScreen when the list of available
 // geohashes becomes known.
-  input.geohashes.forEach((geohash) => {
+  props.geohashes.forEach((geohash) => {
     state.set(['app', 'model', 'geohashes_on_screen'], geohash)
   })
 }
 
-function unregisterGeohashes({input, state}) {
-  input.geohashesToRemove.forEach((geohash) => {
+function unregisterGeohashes({props, state}) {
+  props.geohashesToRemove.forEach((geohash) => {
     state.unset(['app', 'model', 'geohashes_on_screen', geohash]);
   });
 };
 
-function getToken({input, state, output}) {
-  var self = this;
-  db().get('token').then(function(result) {
-    output.success({token:result.doc.token});
-  }).catch(function(err) { //not in Pouch, prompt for user sign in
-    if (err.status !== 404) console.log(err);
-    var options = {
-      metadata: 'eyJqa3UiOiJodHRwczovL2lkZW50aXR5Lm9hZGEtZGV2LmNvbS9jZXJ0cyIsImtpZCI6ImtqY1NjamMzMmR3SlhYTEpEczNyMTI0c2ExIiwidHlwIjoiSldUIiwiYWxnIjoiUlMyNTYifQ.eyJyZWRpcmVjdF91cmlzIjpbImh0dHBzOi8vdHJpYWxzdHJhY2tlci5vYWRhLWRldi5jb20vb2F1dGgyL3JlZGlyZWN0Lmh0bWwiLCJodHRwOi8vbG9jYWxob3N0OjgwMDAvb2F1dGgyL3JlZGlyZWN0Lmh0bWwiXSwidG9rZW5fZW5kcG9pbnRfYXV0aF9tZXRob2QiOiJ1cm46aWV0ZjpwYXJhbXM6b2F1dGg6Y2xpZW50LWFzc2VydGlvbi10eXBlOmp3dC1iZWFyZXIiLCJncmFudF90eXBlcyI6WyJpbXBsaWNpdCJdLCJyZXNwb25zZV90eXBlcyI6WyJ0b2tlbiIsImlkX3Rva2VuIiwiaWRfdG9rZW4gdG9rZW4iXSwiY2xpZW50X25hbWUiOiJUcmlhbHMgVHJhY2tlciIsImNsaWVudF91cmkiOiJodHRwczovL2dpdGh1Yi5jb20vT3BlbkFUSy9UcmlhbHNUcmFja2VyIiwiY29udGFjdHMiOlsiU2FtIE5vZWwgPHNhbm9lbEBwdXJkdWUuZWR1PiJdLCJzb2Z0d2FyZV9pZCI6IjVjYzY1YjIwLTUzYzAtNDJmMS05NjRlLWEyNTgxODA5MzM0NCIsInJlZ2lzdHJhdGlvbl9wcm92aWRlciI6Imh0dHBzOi8vaWRlbnRpdHkub2FkYS1kZXYuY29tIiwiaWF0IjoxNDc1NjA5NTkwfQ.Qsve_NiyQHGf_PclMArHEnBuVyCWvH9X7awLkO1rT-4Sfdoq0zV_ZhYlvI4QAyYSWF_dqMyiYYokeZoQ0sJGK7ZneFwRFXrVFCoRjwXLgHKaJ0QfV9Viaz3cVo3I4xyzbY4SjKizuI3cwfqFylwqfVrffHjuKR4zEmW6bNT5irI',
-      scope: 'rocks',
-        "redirect": 'http://localhost:8000/oauth2/redirect.html',
-    };
-    var domain = state.get(['app', 'model', 'domain']);
-    oadaIdClient.getAccessToken(domain, options, function(err, accessToken) {
-      if (err) { console.dir(err); output.error(); } // Something went wrong  
-      output.success({token:accessToken.access_token});
-    });
-  })
-};
-getToken.outputs = ['success', 'error'];
-getToken.async = true;
+// function showDomainModal({state}) {
+//   state.set(['app', 'view', 'domain_modal', 'visible'], true);
+// };
 
-function storeToken({input, state}) {
-  db().put({
-    doc: {token: input.token},
-    _id: 'token',
-  }).catch(function(err) {
-    if (err.status !== 409) throw err;
-  });
-  state.set(['app', 'token'], input.token);
-  state.set('app.offline', false);
-};
-//storeToken.outputs = ['success', 'error'];
-//storeToken.async = true;
+// function hideDomainModal({state}) {
+//   state.set(['app', 'view', 'domain_modal', 'visible'], false);
+// };
 
-function showDomainModal({state}) {
-  state.set(['app', 'view', 'domain_modal', 'visible'], true);
-};
-
-function hideDomainModal({state}) {
-  state.set(['app', 'view', 'domain_modal', 'visible'], false);
-};
-
-function setDomainText({input, state}) {
-  state.set(['app', 'view', 'domain_modal', 'text'], input.value)
-};
+// function setDomainText({props, state}) {
+//   state.set(['app', 'view', 'domain_modal', 'text'], props.value)
+// };

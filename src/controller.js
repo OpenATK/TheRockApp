@@ -1,27 +1,30 @@
 import { Controller } from 'cerebral';
-import Model from 'cerebral/models/immutable'
+//import Model from 'cerebral/models/immutable'
 //import model from './modules/app/model';
 
-import App from './modules/app'
-import Devtools from 'cerebral-module-devtools'
-import Router from 'cerebral-module-router'
-import Forms from 'cerebral-module-forms'
+import app from './modules/app'
+import Devtools from 'cerebral/devtools'
+//import Router from 'cerebral-router'
 
-const controller = Controller(Model({}))
+const controller = Controller({
+//  state: {},
+//  signals: {},
+  modules: {
+		 app
+  },
 
-controller.addModules({
-  app: App,
+	devtools: Devtools({ remoteDebugger: 'localhost:8787' }),
+	
+	// router: Router({
+	//  '/': 'app.rootRouted',
+	//  '/:filter': 'app.filterClicked'
+	// }, {
+	//  onlyHash: true
+	// }),
 
-  devtools: Devtools(),
-  forms: Forms({
-    rules: {}
-  }),
-  router: Router({
-//    '/': 'app.rootRouted',
-//    '/:filter': 'app.filterClicked'
-  }, {
-    onlyHash: true
-  })
+  providers: [
+
+  ]
+
 })
-
 export default controller

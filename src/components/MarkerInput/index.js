@@ -1,19 +1,20 @@
-import React, { Proptypes } from 'react';
-import { connect } from 'cerebral-view-react';
+import React from 'react';
+//import {PropTypes} from 'prop-types';
+import { connect } from 'cerebral/react';
 import styles from './marker-input.css';
 import uuid from 'uuid';
-import fastyles from '../css/font-awesome.min.css';
-import FontAwesome from 'react-fontawesome';
+//import fastyles from '../css/font-awesome.min.css';
+//import FontAwesome from 'react-fontawesome';
+import {state, signal} from 'cerebral/tags';
 
-export default connect(props => ({
-  rockPickStatus: 'app.view.rock_pick_state',
-  commentInput: 'app.model.comment_input',
-  rockKey: 'app.model.selected_key',
-}), {
-  pickButtonClicked: 'app.pickButtonClicked',
-  commentInputTextChanged: 'app.commentInputTextChanged',
-  addComment: 'app.addComment',
-  deleteButtonClicked: 'app.deleteButtonClicked',
+export default connect({
+  rockPickStatus: state`app.view.rock_pick_state`,
+  commentInput: state`app.model.comment_input`,
+  rockKey: state`app.model.selected_key`,
+  pickButtonClicked: signal`app.pickButtonClicked`,
+  commentInputTextChanged: signal`app.commentInputTextChanged`,
+  addComment: signal`app.addComment`,
+  deleteButtonClicked: signal`app.deleteButtonClicked`,
 },
 
   class MarkerInput extends React.Component {

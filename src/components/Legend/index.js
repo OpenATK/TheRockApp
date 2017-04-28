@@ -1,14 +1,14 @@
-import React, { Proptypes } from 'react';
-import { connect } from 'cerebral-view-react';
+import React from 'react';
+//import {PropTypes} from 'prop-types';
+import { connect } from 'cerebral/react';
 import { MapComponent } from 'react-leaflet';
 import styles from './legend.css';
 import Color from 'color';
 import uuid from 'uuid';
+import {state, signal} from 'cerebral/tags';
 
 export default connect({
-  legends: 'app.view.legends',
-}, {
-
+  legends: signal`app.view.legends`,
 },
 
   class Legend extends MapComponent {

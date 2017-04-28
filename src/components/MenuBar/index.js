@@ -1,19 +1,20 @@
-import React, { PropTypes } from 'react';
-import { connect } from 'cerebral-view-react';
-import { Icon } from 'leaflet';
+import React from 'react';
+//import {PropTypes} from 'prop-types';
+import { connect } from 'cerebral/react';
+//import { Icon } from 'leaflet';
 import uuid from 'uuid';
 import styles from './menu-bar.css';
+import {state, signal} from 'cerebral/tags';
 
-export default connect(props => ({
-  showAll: 'app.view.show_all_rocks',
-  centerLocation: 'app.model.map_center_location',
-  rockPickStatus: 'app.view.rock_pick_state',
-}), {
-  hideRockButtonClicked: 'app.hideRockButtonClicked',
-  addRockButtonClicked: 'app.addRockButtonClicked',
-  clearCacheButtonClicked: 'app.clearCacheButtonClicked',
-  setDomainButtonClicked: 'app.setDomainButtonClicked',
-  syncButtonClicked: 'app.syncButtonClicked',
+export default connect({
+  showAll: state`app.view.show_all_rocks`,
+  centerLocation: state`app.model.map_center_location`,
+  rockPickStatus: state`app.view.rock_pick_state`,
+  hideRockButtonClicked: signal`app.hideRockButtonClicked`,
+  addRockButtonClicked: signal`app.addRockButtonClicked`,
+  clearCacheButtonClicked: signal`app.clearCacheButtonClicked`,
+  setDomainButtonClicked: signal`app.setDomainButtonClicked`,
+  syncButtonClicked: signal`app.syncButtonClicked`,
 },
 
   class MenuBar extends React.Component {

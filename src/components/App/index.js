@@ -1,22 +1,21 @@
-import React, { PropTypes } from 'react';
-import {connect} from 'cerebral-view-react';
+import React from 'react';
+//import {PropTypes} from 'prop-types';
+import {connect} from 'cerebral/react';
 import RockMap from '../Map';
 import styles from './app.css'
 import MenuBar from '../MenuBar'
 import OadaDomainModal from '../OadaDomainModal'
+import {state, signal} from 'cerebral/tags';
 
 export default connect({
-
-}, {
-  init: 'app.init',
+  init: signal`app.init`,
 },
-
   class App extends React.Component {
- 
+
     componentWillMount() {
       this.props.init({});
     }
-
+  
     render() {
       return (
         <div className={styles['app']}>

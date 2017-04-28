@@ -1,27 +1,27 @@
-import React, { Proptypes } from 'react';
-import { connect } from 'cerebral-view-react';
+import React from 'react';
+import { connect } from 'cerebral/react';
 import { Map, Marker, CircleMarker, TileLayer, LatLngBounds } from 'react-leaflet';
 import { Icon } from 'leaflet';
 import styles from './map.css';
 import uuid from 'uuid';
-import fastyles from '../css/font-awesome.min.css';
-import FontAwesome from 'react-fontawesome';
 import MarkerInput from '../MarkerInput/';
+import {state, signal} from 'cerebral/tags';
 
-export default connect(props => ({
-  rocks: 'app.model.rocks',
-  showAll: 'app.view.show_all_rocks',
-  currentLoc: 'app.model.current_location',
-  currentToggle: 'app.view.current_location_toggle',
-  centerLocation: 'app.model.map_center_location',
-  editMode: 'app.view.marker_edit_mode',
-}), {
-  markerDragged: 'app.markerDragged',
-  handleLocationFound: 'app.handleLocationFound',
-  mapDragged: 'app.mapDragged',
-  currentLocationButtonClicked: 'app.currentLocationButtonClicked',
-  rockClicked: 'app.rockClicked',
-  boundsFound: 'app.boundsFound'
+export default connect({
+  //rocks: state`app.model.rocks`,
+  rocks: state`app.oada\-cache.bookmarks.rocks.list\-index`,
+  showAll: state`app.view.show_all_rocks`,
+  currentLoc: state`app.model.current_location`,
+  currentToggle: state`app.view.current_location_toggle`,
+  centerLocation: state`app.model.map_center_location`,
+  editMode: state`app.view.marker_edit_mode`,
+  markerDragged: signal`app.markerDragged`,
+  handleLocationFound: signal`app.handleLocationFound`,
+  mapDragged: signal`app.mapDragged`,
+  currentLocationButtonClicked: signal`app.currentLocationButtonClicked`,
+  rockClicked: signal`app.rockClicked`,
+  boundsFound: signal`app.boundsFound`,
+  initSetCenter: signal`app.initSetCenter`
 },
 
   class RockMap extends React.Component {
@@ -29,12 +29,17 @@ export default connect(props => ({
     componentDidMount() {
       this.refs.map.leafletElement.locate()
 //Get Initial Center Location of Map...
-      var centerLat = this.refs.map.getLeafletElement().getCenter().lat;
-      var centerLng = this.refs.map.getLeafletElement().getCenter().lng;
-      this.props.mapDragged({lat:centerLat, lng:centerLng});
+      var centerLat = this.refs.map.leafletElement.getCenter().lat;
+      var centerLng = this.refs.map.leafletElement.getCenter().lng;
+      //console.log(centerLat)
+      //console.log(centerLng)
+
+      this.props.initSetCenter({lat:centerLat, lng:centerLng});
       
-      var bounds = this.refs.map.getLeafletElement().getBounds();
+      var bounds = this.refs.map.leafletElement.getBounds();
+      //console.log(bounds)
       this.props.boundsFound({bounds: bounds});
+      
     }
 
     render() {
@@ -57,7 +62,6 @@ export default connect(props => ({
         );
       }
 
-//Add Rock Marker...
       var rockIcon = L.icon({
         iconUrl: 'rock.png',
         iconAnchor: [12.5, 50],
@@ -70,9 +74,7 @@ export default connect(props => ({
 
       var position = [40.4286882, -86.9137644];
       var rockMarkers = [];
-
-//rocks: rock location array in state tree...
-      //if (this.props.rocks) {
+      //console.log(this.props.rocks)
       Object.keys(this.props.rocks).forEach((key) => {
         var rock = this.props.rocks[key];
         rockMarkers.push(
@@ -88,20 +90,16 @@ export default connect(props => ({
           </Marker>
         );
       });
-      //}
-
       return (
         <div className={styles['map-panel']}>
           <Map 
             dragging={true}
             center={(this.props.currentToggle) ? this.props.centerLocation : position} 
             ref='map'
-            zoom={15}
-            
+            zoom={15}            
             onLocationfound={(e) => this.props.handleLocationFound({lat:e.latlng.lat, lng:e.latlng.lng})}
-            onMoveend={(this.refs.map) ? (() => this.props.mapDragged({lat:this.refs.map.getLeafletElement().getCenter().lat, lng: this.refs.map.getLeafletElement().getCenter().lng, bounds: this.refs.map.getLeafletElement().getBounds()})) : console.log("")}
+            onMoveend={(this.refs.map) ? (() => this.props.mapDragged({lat:this.refs.map.leafletElement.getCenter().lat, lng: this.refs.map.leafletElement.getCenter().lng, bounds: this.refs.map.leafletElement.getBounds()})) : false}
             >
-
             <TileLayer
               url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
               attribution='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'

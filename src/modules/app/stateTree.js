@@ -3,7 +3,15 @@ import uuid from 'uuid';
 var stateTree = {
   token: {},
   offline: true,
+  'oada-cache': {
+    bookmarks: {
+      rocks: {
+        'list-index': {
 
+        },
+      },
+    },
+  },
   model: {
     user: {},
     domain: '',
@@ -33,5 +41,9 @@ var stateTree = {
     },
   }
 }; 
+// stateTree['oada-cache'] = {}
+// stateTree['oada-cache']['bookmarks'] = {}
+// stateTree['oada-cache']['bookmarks']['rocks'] = {}
+// stateTree['oada-cache']['bookmarks']['rocks']['list-index'] = {}
 
 export default stateTree; 

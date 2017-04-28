@@ -5,32 +5,32 @@ import _ from 'lodash';
 var agent = require('superagent-promise')(require('superagent'), Promise);
 var pointer = require('json-pointer');
 import db from '../Cache';
-import tree from '../Cache/tree.js';
+//import tree from '../Cache/tree.js';
 
 var cache = {
   
   get: function(url, token) {
     //get resource id from url
-    console.log(url)
+    //console.log(url)
     return db().get(url).then(function(resId) {
       //get resource
-      console.log('!!!url is in pouch!!!')
-      console.log(resId)
+      //console.log('!!!url is in pouch!!!')
+      //console.log(resId)
       return db().get(resId.doc).then(function(content) {
-        console.log(content)
+        //console.log('!!!!in pouch!!!!')
         return content.doc;
       }).catch(function(err) {
       	return pouchPutUpdate(token, url);
       })
     // Perform an HTTP request to OADA 
     }).catch(function(err) {
-      console.log('!!!Not in pouch!!!')
+      //console.log('!!!Not in pouch!!!')
       return pouchPutNew(token, url);
-    });
+    })
   },
 
   delete: function(token, url) {
-  	console.log(url)
+  	//console.log(url)
   	return agent('DELETE', url)
       .set('Authorization', 'Bearer '+ token)
       .end()
@@ -45,33 +45,34 @@ var cache = {
 //If a key exists (GET the key), nothing
 //If not, PUT to resources
 
-  setup: function(domain, token) {
+  setup: function(domain, token, tree) {
   	var resourcesUrl = 'https://' + domain + '/resources/';
     var bookmarksUrl = 'https://' + domain + '/bookmarks';
     var serverId = { domain: domain, token: token, resourcesUrl: resourcesUrl, bookmarksUrl: bookmarksUrl };
   	var keysArray = [];
-  	recursiveSetup(tree, serverId, keysArray);
+    return recursiveSetup(tree, serverId, keysArray);
   },
 
 
-  put: function(domain, token, bookmarksUrl, data) {
+  put: function(domain, token, bookmarksUrl, data, tree) {
   	var self = this;
     //Delete pouch
-    console.log(bookmarksUrl)
+    //console.log(bookmarksUrl)
     return db().get(bookmarksUrl).then(function(resId) {
-      console.log('!!!Remove Pouch!!!')
-      console.log(resId)
+      //console.log('!!!Remove Pouch!!!')
+      //console.log(resId)
       return db().get(resId.doc).then(function(content) {
         return db().remove(content)
       }).then(function(){
-        console.log('!!!Content in the Pouch is removed!!!')
-        return putSetup(domain, token, bookmarksUrl, data);
+        //console.log('!!!Content in the Pouch is removed!!!')
+        return putSetup(domain, token, bookmarksUrl, data, tree);
       }).catch(function(err) {
         console.log(err)
       	return err;
       })
     }).catch(function(err) {
-      return putSetup(domain, token, bookmarksUrl, data);
+      console.log('Not in Pouch')
+      return putSetup(domain, token, bookmarksUrl, data, tree);
     })
   },
 }
@@ -83,25 +84,26 @@ var pouchPutNew = function(token, url) {
     .set('Authorization', 'Bearer '+ token)
     .end()
     .then(function(response) {
+    	//console.log(response)
       if (response.body._id) {
       	//each rock
-      	console.log(response.body._id)
-      	console.log(url)
+      	//console.log(response.body._id)
+      	//console.log(url)
       	return db().put({
           doc: response.body._id,
           _id: url, 
         }).then(function(result) {
-          console.log('!!!1st Pouch PUT!!!')
-          console.log(result)
-          console.log(response.body)
-      	  console.log(response.body._id)
+          //console.log('!!!1st Pouch PUT!!!')
+          //console.log(result)
+          //console.log(response.body)
+      	  //console.log(response.body._id)
           return db().put({
             doc: response.body, 
             _id: response.body._id,
           }).then(function(res) {
-          	console.log('!!!2nd Pouch PUT!!!')
-          	console.log(res)
-          	console.log(response.body)
+          	//console.log('!!!2nd Pouch PUT!!!')
+          	//console.log(res)
+          	//console.log(response.body)
           	return response.body;
           }).catch(function(err) {
           	console.log(err);
@@ -130,15 +132,15 @@ var pouchPutUpdate = function(token, url) {
 	  .end()
 	  .then(function(response) {
 	    if (response.body._id) {
-	      console.log(response.body)
-		    console.log(response.body._id)
+	      //console.log(response.body)
+		    //console.log(response.body._id)
 	      return db().put({
 	        doc: response.body, 
 	        _id: response.body._id,
 	      }).then(function(res) {
-	    	  console.log('!!!2nd Pouch PUT!!!')
-	    	  console.log(res)
-	    	  console.log(response.body)
+	    	  //console.log('!!!2nd Pouch PUT!!!')
+	    	  //console.log(res)
+	    	  //console.log(response.body)
 	    	  return response.body;
 	      }).catch(function(err) {
 	    	  console.log(err);
@@ -155,9 +157,9 @@ var pouchPutUpdate = function(token, url) {
 	} else { return null;}
 }
 
-var putSetup = function(domain, token, bookmarksUrl, data) {
+var putSetup = function(domain, token, bookmarksUrl, data, tree) {
 	var self = this;
-	console.log(self)
+	//console.log(self)
 	if (data.sync_status == 'new') {
     //New object
     return Promise.try(function() {
@@ -169,11 +171,11 @@ var putSetup = function(domain, token, bookmarksUrl, data) {
       var pathStr = bookmarksUrl.slice(8+domain.length, -38);
       var pathArray = pointer.parse(pathStr);
       pathArray.splice(0, 1);  //remove bookmarks
-      console.log(pathArray);
-      return smartPutSetup(domain, token, pathArray, data, objKey);
+      //console.log(pathArray);
+      return smartPutSetup(domain, token, pathArray, data, objKey, tree);
       }).then(() => {
 	      return cache.get(bookmarksUrl, token).then(function() {
-	  	    console.log('finished put')
+	  	    //console.log('finished put')
 	  	    return true
 	      })
       }).catch(function(err) {
@@ -189,23 +191,23 @@ var putSetup = function(domain, token, bookmarksUrl, data) {
     }).then(() => {
   	  //console.log(bookmarksUrl+data.id+'/')
   	  return cache.get(bookmarksUrl, token).then(function() {
-  	    console.log('finished update put')
+  	    //console.log('finished update put')
   	    return true
       })
     })
   }
 }
 
-var smartPutSetup = function(domain, token, pathArray, data, objKey) {
+var smartPutSetup = function(domain, token, pathArray, data, objKey, tree) {
   var temp = _.cloneDeep(tree);
   var treePointer = '/' + pathArray[0] + '/';
   var bookmarksUrl = 'https://'+domain+'/bookmarks/';
   var resourcesUrl = 'https://'+domain+'/resources/';
   return Promise.each(pathArray, function(pathElement, i) {
-    console.log('!!!!!!!!!!!!!!', i, '!!!!!!!!!!!!!!')
-    console.log(temp);
-    console.log(tree);
-    console.log(pathElement)
+    //console.log('!!!!!!!!!!!!!!', i, '!!!!!!!!!!!!!!')
+    //console.log(temp);
+    //console.log(tree);
+    //console.log(pathElement)
     temp = temp[pathElement]; 
     bookmarksUrl += pathElement + '/';
     if (pathArray[i+1]) {
@@ -239,7 +241,7 @@ var smartPutSetup = function(domain, token, pathArray, data, objKey) {
         return false
       }
     } else {
-      console.log('no element in the next index. Deep PUT the data')
+      //console.log('no element in the next index. Deep PUT the data')
       var bookData = {};
       bookData[data.id] = {
         _id: data.id,
@@ -247,7 +249,7 @@ var smartPutSetup = function(domain, token, pathArray, data, objKey) {
       };
       return simplePut(resourcesUrl+objKey, bookmarksUrl, data, bookData, token)
     }
-    console.log('smartPutSetup End')
+    //console.log('smartPutSetup End')
   }).catch(function(err) {
   	console.log(err)
   	return err;
@@ -283,7 +285,7 @@ var simpleResPut = function(url, data, token) {
     .send(data)
     .end()
     .then(() => {
-      console.log('!!!simpleResPut Done!!!')
+      //console.log('!!!simpleResPut Done!!!')
     }).catch(function(err) {
   	  console.log(err)
   	  return err;
@@ -301,7 +303,7 @@ var handleStarSetup = function(subTree, serverId, keysArray){
       if (response.body) {
       	return Promise.each(Object.keys(response.body), function(key) {
       	  var content = {};
-      	  content[key] = subTree['*'];
+      	  content[key] = subTree['*'];  //skip * key and move to next key
           //console.log('* recursive');
           var newKeysArray = [];
           for (var i = 0; i < keysArray.length; i++) {
@@ -310,7 +312,7 @@ var handleStarSetup = function(subTree, serverId, keysArray){
           //console.log(newKeysArray);
           return recursiveSetup(content, serverId, newKeysArray);
       	})
-      }
+      } else { return null; }
     })
 }
 
@@ -353,18 +355,17 @@ var recursiveSetup = function(subTree, serverId, keysArray) {
             }
 
           }
-        }, function(error) {
+        }).catch((error) => {
           //console.log(error);
           //console.log(keysArray);
           //console.log('Bookmarks not exists!');
           var data = replaceLinks(content, content);
           return updateServerSetup(content, data, key, serverId, keysArray);
         });
-
-    }
+    } else { return null; }
 
   }).then(function() {
-  	console.log('Setup runs success!!!');
+  	//console.log('Setup runs success!!!');
   });
 }
 

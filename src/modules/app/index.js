@@ -22,98 +22,55 @@ import { addCommentText } from './chains';
 import { deleteRock } from './chains';
 import { displayDomainModal } from './chains';
 import { updateRockData } from './chains';
+import { initSetMapCenter } from './chains';
 
-export default (module) => {
-  module.addState(
-    stateTree
-  )
+export default {
+  state: stateTree,
 
-  module.addSignals({
+  signals: {
 
-    init: [
-      ...initialize
-    ],
+    init: initialize,
 
-    clearCacheButtonClicked: [
-      ...clearCache,
-    ],
+    clearCacheButtonClicked: clearCache,
 
-   tileUnloaded: [
-     ...removeGeohashes,
-   ],
+    tileUnloaded: removeGeohashes, 
 
-    newTileDrawn: [
-      ...addGeohashes,
-    ],
+    newTileDrawn: addGeohashes,
 
-    domainSubmitClicked: [
-      ...submitDomainModal,
-    ],
+    domainSubmitClicked: submitDomainModal,
 
-    domainCancelClicked: [
-      ...cancelDomainModal,
-    ],
+    domainCancelClicked: cancelDomainModal,
 
-    domainTextChanged: {
-      chain: [...updateDomainText],
-      immediate: true,
-    },
+    domainTextChanged: updateDomainText,
 
-    addRockButtonClicked: [
-      ...addRockLoc,
-    ],
+    addRockButtonClicked: addRockLoc,
 
-    markerDragged: [
-      ...setNewRockLoc,
-    ],
+    markerDragged: setNewRockLoc,
 
-    pickButtonClicked: [
-      ...setRockPicked,
-    ],
+    pickButtonClicked: setRockPicked,
 
-    hideRockButtonClicked: [
-      ...hidePickedMarker,
-    ],
+    hideRockButtonClicked: hidePickedMarker,
 
-    handleLocationFound: [
-      ...getCurrentLocation,
-    ],
+    handleLocationFound: getCurrentLocation,
 
-    currentLocationButtonClicked: [
-      ...showCurrentLocation,
-    ],
+    currentLocationButtonClicked: showCurrentLocation,
 
-    mapDragged: [
-      ...getMapCenter,
-    ],
+    mapDragged: getMapCenter,
 
-    rockClicked: [
-      ...showEdit,
-    ],
+    initSetCenter: initSetMapCenter,
 
-    boundsFound: [
-      ...setBounds,
-    ],
+    rockClicked: showEdit,
 
-    commentInputTextChanged: [
-      ...inputTextChanged,
-    ],
+    boundsFound: setBounds,
 
-    addComment: [
-      ...addCommentText,
-    ],
+    commentInputTextChanged: inputTextChanged,
 
-    deleteButtonClicked: [
-      ...deleteRock,
-    ],
+    addComment: addCommentText,
 
-    setDomainButtonClicked: [
-      ...displayDomainModal,
-    ],
+    deleteButtonClicked: deleteRock,
 
-    syncButtonClicked: [
-      ...updateRockData,
-    ],
+    setDomainButtonClicked: displayDomainModal,
 
-  })
+    syncButtonClicked: updateRockData,
+  }
 }
