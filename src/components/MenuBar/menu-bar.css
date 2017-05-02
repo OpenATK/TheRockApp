@@ -33,7 +33,7 @@
   width: 50px;
   background-size: 47px 47px;
   background-color: black;
-  background-image: url('../../../dist/eye_all_rocks.png');
+  background-image: url('../../../public/eye_all_rocks.png');
 }
 .eye-unpicked-button {
   display: inline-block;
@@ -44,7 +44,7 @@
   width: 50px;
   background-size: 47px 47px;
   background-color: black;
-  background-image: url('../../../dist/eye_unpicked.png');
+  background-image: url('../../../public/eye_unpicked.png');
 }
 .add-button {
   display: inline-block;
@@ -55,7 +55,7 @@
   width: 50px;
   background-size: 47px 47px;
   background-color: black;
-  background-image: url('../../../dist/add_button.png');
+  background-image: url('../../../public/add.png');
 }
 .clear-cache-button {
   cursor: pointer;

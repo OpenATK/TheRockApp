@@ -2,7 +2,7 @@
   width: 50px;
   height: 67px;
   margin: 10px;
-  background-image: url('../../../dist/rock_pick_up.png');
+  background-image: url('../../../public/rock_pick_up.png');
   background-color: black;
   align-items: center;
   order: 1;
@@ -12,7 +12,7 @@
   width: 50px;
   height: 67px;
   margin: 10px;
-  background-image: url('../../../dist/rock_put_down.png');
+  background-image: url('../../../public/rock_put_down.png');
   background-color: black;
   align-items: center;
   order: 1;
@@ -33,7 +33,7 @@
   width: 50px;
   height: 67px;
   margin: 10px;
-  background-image: url('../../../dist/delete.png');
+  background-image: url('../../../public/delete.png');
   background-color: black;
   background-size: 47px 60px;
   align-items: center;

@@ -1,10 +1,10 @@
 import { Promise } from 'bluebird';
 import uuid from 'uuid';
 import _ from 'lodash';
-var agent = require('superagent-promise')(require('superagent'), Promise);
-var pointer = require('json-pointer');
-import db from '../Cache';
-//import tree from '../Cache/tree.js';
+let agent = require('superagent-promise')(require('superagent'), Promise);
+import pointer from 'json-pointer';
+import PouchDB from 'pouchdb';
+let db_singleton = null;
 
 var pouchPutNew = function(token, url) {
 	if (token) {
@@ -14,11 +14,11 @@ var pouchPutNew = function(token, url) {
     .then(function(response) {
       if (response.body._id) {
       	//each rock
-      	return db().put({
+      	return cache.db().put({
           doc: response.body._id,
           _id: url, 
         }).then(function(result) {
-          return db().put({
+          return cache.db().put({
             doc: response.body, 
             _id: response.body._id,
           }).then(function(res) {
@@ -48,7 +48,7 @@ var pouchPutUpdate = function(token, url) {
 	  .end()
 	  .then(function(response) {
 	    if (response.body._id) {
-	      return db().put({
+	      return cache.db().put({
 	        doc: response.body, 
 	        _id: response.body._id,
 	      }).then(function(res) {
@@ -322,9 +322,9 @@ var cache = {
   
   get: function(url, token) {
     //get resource id from url
-    return db().get(url).then(function(resId) {
+    return cache.db().get(url).then(function(resId) {
       //get resource
-      return db().get(resId.doc).then(function(content) {
+      return cache.db().get(resId.doc).then(function(content) {
         return content.doc;
       }).catch(function(err) {
       	return pouchPutUpdate(token, url);
@@ -341,23 +341,19 @@ var cache = {
       .end()
   },
 
-//setup takes the setup javascript object and recursively PUTS keys to oada server
-//and create resources as necessary.
-//For rocks, there are no other keys to find from the oada-formats library. 
-//We don't have to worry about this for now.
-
 //check if there is a path with keys in each level
 //If a key exists (GET the key), nothing
 //If not, PUT to resources
-
-
-
+  db: () => {
+    if (!db_singleton) db_singleton = new PouchDB('TheRockApp', { size: 50 });
+    return db_singleton;
+  },
 
   put: function(domain, token, bookmarksUrl, data, tree) {
     //Delete pouch
-    return db().get(bookmarksUrl).then(function(resId) {
-      return db().get(resId.doc).then(function(content) {
-        return db().remove(content)
+    return cache.db().get(bookmarksUrl).then(function(resId) {
+      return cache.db().get(resId.doc).then(function(content) {
+        return cache.db().remove(content)
       }).then(function(){
         return putSetup(domain, token, bookmarksUrl, data, tree);
       }).catch(function(err) {
@@ -370,6 +366,10 @@ var cache = {
     })
   },
 
+//setup takes the setup javascript object and recursively PUTS keys to oada server
+//and create resources as necessary.
+//For rocks, there are no other keys to find from the oada-formats library. 
+//We don't have to worry about this for now.
   setup: function(domain, token, tree) {
   	var resourcesUrl = 'https://' + domain + '/resources/';
     var bookmarksUrl = 'https://' + domain + '/bookmarks';

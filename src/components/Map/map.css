@@ -25,7 +25,7 @@
   border-radius: 50%;
   background-size: 47px 47px;
   background-color: black;
-  background-image: url('../../../dist/current_location.png');
+  background-image: url('../../../public/current_location.png');
   z-index: 1;
   outline: none;
 }

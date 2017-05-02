@@ -1,5 +1,3 @@
-import uuid from 'uuid';
-
 var stateTree = {
   token: {},
   offline: true,

@@ -1,5 +1,5 @@
 import { Promise } from 'bluebird';
-import oadaCache from './cache.js';
+import oadaCache from '../oada-app-cache'
 import { set, unset } from 'cerebral/operators';
 import { state, props } from 'cerebral/tags';
 import uuid from 'uuid';
@@ -181,13 +181,9 @@ function oadaGet({props, state, path}) {
 
 function setAvailableData({props, state, path}) {
   console.log('setAvailableData')
-  //console.log(cerebralPath)
   Object.keys(props.objData).forEach(function(objKey) {
     var cerebralTarget = cerebralPath.slice(); //copy cerebralPath
-    //console.log(cerebralTarget)
-    //console.log(objKey)
     cerebralTarget.push(objKey)
-    //console.log(cerebralTarget)
     state.set(cerebralTarget, props.objData[objKey]);
   })
 };
@@ -208,40 +204,24 @@ function createBookmarksUrl({props, state, path}) {
 
 function prepareBookmarksUrl({props, state, path}) {
   var bookmarksUrl = 'https://'+props.domain+'/bookmarks/rocks/list-index/';
-//  set(props`bookmarksUrl`, `https://${props`domain`}/bookmarks/rocks/list-index/${props`id`}/`),
   return {bookmarksUrl}
 };
 
 function getPathFromUrl({props, state, path}) {
-  //if (last element == '/') then remove '/' and pointer.parse
-  //else pointer.parse
   var pathArray = pointer.parse(props.url);  //[rocks, list-index, ID]
-  //console.log(pathArray)
-  //console.log(cerebralPrefix)
-  //var pieces = cerebralPrefix.split('.');
-  //console.log(pieces)
   var tempPath = cerebralPrefix.concat(pathArray);
-  //console.log(cerebralPrefix)
 
-  //conversion from array to string
   var strTemp = tempPath.join();
-  //console.log(strTemp)
   var statePath = strTemp.replace(/,/g, '.');
-  //console.log(newStr)
 
-  //console.log(statePath)
   return {statePath} //oada-cache.bookmarks.rocks.list-index.ID
 };
 
 function oadaPut({props, state, path}) {
-  //console.log(props.bookmarksUrl)
   var bookmarksUrl = props.bookmarksUrl+props.id+'/';
   var content = props.content;
   var id = props.id;
   content.id = id;
-  //props.content.props.id = props.id;
-  //console.log(content)
-  //console.log(bookmarksUrl)
   return oadaCache.put(props.domain, props.token, bookmarksUrl, content, tree).then(function() {
     return path.success();
   }).catch(function(err) {
@@ -270,5 +250,4 @@ function oadaBookmarkDelete({props, state, path}) {
     return err;
   })
 };
-
 

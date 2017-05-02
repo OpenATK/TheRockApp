@@ -1,7 +1,7 @@
 import React from 'react';
 import { connect } from 'cerebral/react';
-import { Map, Marker, CircleMarker, TileLayer, LatLngBounds } from 'react-leaflet';
-import { Icon } from 'leaflet';
+import { Map, Marker, CircleMarker, TileLayer } from 'react-leaflet';
+import L from 'leaflet';
 import styles from './map.css';
 import uuid from 'uuid';
 import MarkerInput from '../MarkerInput/';

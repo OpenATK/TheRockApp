@@ -5,7 +5,7 @@ import RockMap from '../Map';
 import styles from './app.css'
 import MenuBar from '../MenuBar'
 import OadaDomainModal from '../OadaDomainModal'
-import {state, signal} from 'cerebral/tags';
+import {signal} from 'cerebral/tags';
 
 export default connect({
   init: signal`app.init`,

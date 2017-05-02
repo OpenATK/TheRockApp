@@ -1,8 +1,5 @@
 import React from 'react';
-//import {PropTypes} from 'prop-types';
 import { connect } from 'cerebral/react';
-//import { Icon } from 'leaflet';
-import uuid from 'uuid';
 import styles from './menu-bar.css';
 import {state, signal} from 'cerebral/tags';
 
@@ -24,6 +21,7 @@ export default connect({
         <div className={styles['menu-bar']}>
           <img 
             src="launcher.png"
+            alt="meaningfulText"
             className={styles['menu-appicon']}
             >
           </img>

@@ -1,18 +1,12 @@
-import uuid from 'uuid';
-import request from 'superagent';
 import _ from 'lodash';
-import md5 from 'md5';
 import oadaIdClient from 'oada-id-client';
 import { Promise } from 'bluebird';  
-var agent = require('superagent-promise')(require('superagent'), Promise);
-import PouchDB from 'pouchdb';
-import { LatLngBounds } from 'react-leaflet';
-import { set, unset, toggle } from 'cerebral/operators';
+import { set, toggle } from 'cerebral/operators';
 import { props, state } from 'cerebral/tags'
+import L from 'leaflet';
 import db from '../Cache';
-import oadaCache from './cache.js';
-import cerebralCache from './cerebralCache.js';
-var pointer = require('json-pointer');
+import cerebralCache from '../cerebral-module-oada-cache/chains/';
+const getAccessToken = Promise.promisify(oadaIdClient.getAccessToken)
 
 //var cerebralPath;
 
@@ -32,35 +26,6 @@ var tree = {
     // }
   //},
 };
-
-// var tree = {
-//   testone: {
-//     _type: 'application/vnd.oada.rocks.1+json',
-//     'list-index': {
-//       corn: {
-//         testtwo: {
-//           '*': {},
-//         }
-//       },
-//       beans: {
-//         testtwo: {
-//           '*': {},
-//         }
-//       },
-//       wheat: {
-//         testtwo: {
-//           '*': {}, 
-//         }
-//       },
-//     },
-//   },
-//   testthree: {
-//     'list-index': {
-//       'indiana':{},
-//       'michigan':{}
-//     }
-//   }
-// };
 
 var getRockData = [
   getToken, {
@@ -221,7 +186,7 @@ export var updateDomainText = [
 ];
 
 function getToken({props, state, path}) {
-  var self = this;
+  return path.success({token:'VYKM5ZRaSEE_W-EzOyV978WjT0hRtKoKddou5R94'})
   return db().get('token').then(function(result) {
   	//console.log('found token in pouch')
     return path.success({token:result.doc.token});
@@ -235,13 +200,13 @@ function getToken({props, state, path}) {
     };
     var domain = state.get(['app', 'model', 'domain']);
     //console.log('firing oada login')
-    return new Promise((resolve,reject) => {
-    	oadaIdClient.getAccessToken(domain, options, function(err, accessToken) {
-    	  //console.log('returned from oada')
-        if (err) { console.dir(err); resolve(path.error()); } // Something went wrong  
-        resolve(path.success({token:accessToken.access_token}));
-      })
-    });
+    return getAccessToken(domain, options).then((result)=> {
+      console.log('returned from oada', result)
+      return path.success({token:result.access_token});
+    }).catch((err) => {
+      console.dir(err); 
+      return path.error(); // Something went wrong  
+    })
   })
 };
 
@@ -262,6 +227,7 @@ function storeToken({props, state}) {
   state.set('app.offline', false);
 };
 
+/*
 function setupOadaServer({state}) {
   var token = state.get(['app', 'token']);
   var domain = state.get(['app', 'model', 'domain']);
@@ -270,7 +236,8 @@ function setupOadaServer({state}) {
   //return cache.setup(domain, token);
   return oadaCache.setup(domain, token, tree);
 };
-
+*/
+/*
 function getAvailableData({state, path}) {
   var token = state.get(['app', 'token']);
   var domain = state.get(['app', 'model', 'domain']);
@@ -289,13 +256,14 @@ function getAvailableData({state, path}) {
   	return err;
   })
 };
-
+*/
+/*
 function setAvailableData({props, state, path}) {
 	Object.keys(props.objData).forEach(function(objKey) {
     state.set(['app', 'model', 'rocks', objKey], props.objData[objKey]);
   })
 };
-
+*/
 // function deleteRockDataRes({props, state, path}) {
 // 	console.log("delete rock resources in the server");
 //   var token = state.get(['app', 'token']);
@@ -448,15 +416,11 @@ function createNewLocation({props, state, path}) {
   return {content: data}
 };
 
-// function generateNewId({state, path}) {
-// 	var id = uuid.v4();
-// 	return {id}
-// };
-
 function createNewRock({props, state, path}) {
   var currentLocState = state.get(['app', 'view', 'current_location_state']);
-  if (currentLocState == false) {
-    var obj = {
+  var obj;
+  if (currentLocState === false) {
+    obj = {
       //id: props.id,
       location: {
         latitude: props.lat,
@@ -470,7 +434,7 @@ function createNewRock({props, state, path}) {
     var mapBounds = state.get(['app', 'model', 'map_bounds']);
     var currentLat = state.get(['app', 'model', 'current_location', 'lat']); 
     var currentLng = state.get(['app', 'model', 'current_location', 'lng']);
-    var obj = {
+    obj = {
       //id: props.id,
       location: {
         latitude: currentLat,
@@ -498,47 +462,6 @@ function createNewRockUrl({props, state, path}) {
 	return {bookmarksUrl}
 }
 
-
-// state = {a:{}}
-// //What you can't do:
-// state.set('a.b.c.d', 10)
-// // I think this works, because you're only going one layer deeper 
-// state.set('a.b': {c:10})
-// var tempA = state.get('a') // {}
-// tempA.a = {c:{d:10}}
-// state.set('a', tempA)
-
-//url should be e.g., '/bookmarks/rocks/list-index/'
-// function urlToPath(url) {
-//   var pieces = url.split('/')
-//   pieces.splice(0,2)
-//   pieces.splice(pieces.length-1, 1)
-//   pieces.join('.')
-//   pieces
-// }
-
-// assume url defines as /bookmarks/rocks/list-index/
-// function getPathFromUrl({props, state, path}) {
-//   var pathPrefix = ['app', 'model'];
-//   var pathStr = props.url.slice(8+props.domain.length, -1);
-//   var pathArray = pointer.parse(pathStr);
-//   pathArray.splice(0, 1);  //remove bookmarks
-//   pathArray.splice(1, 1);  //remove list-index
-//   var statePath = pathPrefix.concat(pathArray);
-//   console.log(statePath)
-// 	return {defaultStatePath: statePath} //[app, model, rocks, id]
-// }
-
-// function oadaPut({props, state, path}) {
-// 	console.log(props.url)
-// 	return oadaCache.put(props.domain, props.token, props.url, props.content, tree).then(function() {
-//     return path.success();
-//   }).catch(function(err) {
-//   	console.log(err)
-//   	return err;
-//   })
-// };
-
 function createNewComment({props, state, path}) {
   console.log("update comment data");
   var data = {
@@ -564,15 +487,15 @@ function setSyncFailedStatus({props, state}) {
   state.set(['app', 'model', 'sync_new'], props.syncNew);
 };
 
-function updateFailedData({props, state}) {
+function updateFailedData({props, state, path}) {
   var token = state.get(['app', 'token']);
   var domain = state.get(['app', 'model', 'domain']);
   var resourcesUrl = 'https://' + domain + '/resources/';
   var bookmarksUrl = 'https://' + domain + '/bookmarks/rocks/list-index/';
   props.syncFailed.forEach(function(failedRock) {
-    return cache.put(token, resourcesUrl, bookmarksUrl, failedRock.id, failedRock).then(function() {
+    return cerebralCache.put(token, resourcesUrl, bookmarksUrl, failedRock.id, failedRock).then(function() {
       var syncUrl = 'https://' + domain + '/resources/' + failedRock.id + '/sync_status/';
-      return cache.delete(token, syncUrl).then(function() {
+      return cerebralCache.delete(token, syncUrl).then(function() {
         return path.success({});
       }).catch(function(err) {
       	console.log(err)
@@ -594,9 +517,9 @@ function updateFailedNewRocks({props, state, path}) {
   if (props.syncNew) {
     console.log("PUT new rock to bookmark!!!")
     props.syncNew.forEach(function(newRock) {
-      return cache.put(token, resourcesUrl, bookmarksUrl, newRock.id, newRock).then(function() {
+      return cerebralCache.put(token, resourcesUrl, bookmarksUrl, newRock.id, newRock).then(function() {
         var syncUrl = 'https://' + domain + '/resources/' + newRock.id + '/sync_status/';
-        return cache.delete(token, syncUrl).then(function() {
+        return cerebralCache.delete(token, syncUrl).then(function() {
           return path.success({});
         }).catch(function(err) {
 		    	console.log(err)
