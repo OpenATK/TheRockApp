@@ -1,6 +1,6 @@
 import React from 'react';
 import { connect } from 'cerebral/react';
-import styles from './styles.css';
+import './styles.css';
 import {state, signal} from 'cerebral/tags';
 
 export default connect({
@@ -14,12 +14,12 @@ export default connect({
 class OadaDomainModal extends React.Component {
   render() {
     return(
-      <div className={styles[(this.props.visible) ? 'oada-domain-screen' : 'hidden']}>
-        <div className={styles[(this.props.visible) ? 'oada-domain-modal' : 'hidden']}>
+      <div className={(this.props.visible) ? 'oada-domain-screen' : 'hidden'}>
+        <div className={(this.props.visible) ? 'oada-domain-modal' : 'hidden'}>
           OADA server domain: 
           <br />
           <span 
-            className={styles['subtext']}>
+            className={'subtext'}>
             (e.g. oada-dev.com)
           </span>
           <input 
@@ -29,13 +29,13 @@ class OadaDomainModal extends React.Component {
           />
           <br />
           <button 
-            className={styles['submit-button']}
+            className={'submit-button'}
             type='button'
             onClick={() => this.props.domainSubmitClicked({value:this.props.text})}>
             Submit
           </button>
           <button 
-            className={styles['cancel-button']}
+            className={'cancel-button'}
             type='button'
             onClick={() => this.props.domainCancelClicked({value:'NotNow'})}>
             Not Now 

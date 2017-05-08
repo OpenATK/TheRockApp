@@ -2,7 +2,7 @@ import React from 'react';
 //import {PropTypes} from 'prop-types';
 import {connect} from 'cerebral/react';
 import RockMap from '../Map';
-import styles from './app.css'
+import './app.css'
 import MenuBar from '../MenuBar'
 import OadaDomainModal from '../OadaDomainModal'
 import {signal} from 'cerebral/tags';
@@ -18,7 +18,7 @@ export default connect({
   
     render() {
       return (
-        <div className={styles['app']}>
+        <div className={'app'}>
           <OadaDomainModal />
           <MenuBar />
           <RockMap />

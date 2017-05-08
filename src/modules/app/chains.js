@@ -13,29 +13,63 @@ const getAccessToken = Promise.promisify(oadaIdClient.getAccessToken)
 // Define tree structure for the oada server setup
 var tree = {
   rocks: {
-    _type: 'application/vnd.oada.rocks.1+json',
-    'list-index': {
-      '*': {
-      },
+    'rocks-index': {
+      '*': {},
     },
   },
-  //testthree: {
-    // 'list-index': {
-    //   'indiana':{},
-    //   'michigan':{}
-    // }
-  //},
 };
+/*
+var tree = {
+  A: {
+    _type: 'application/vnd.oada.rocks.1+json',
+    B: {
+      '*': { }
+    },
+    C: {
+      _type: 'application/vnd.oada.rocks.1+json',
+      D: {
+      }
+    },
+  },
+};
+*/
+/*
+var tree = {
+  A: {
+    _type: 'application/vnd.oada.rocks.1+json',
+    B: {},
+    C: {
+      _type: 'application/vnd.oada.rocks.1+json',
+      D: {
+      }
+    },
+  },
+};
+*/
+
+/*
+var tree = {
+  A: {
+    _type: 'application/vnd.oada.rocks.1+json',
+    B: {
+    },
+    C: {
+      D: {
+      }
+    },
+  },
+};
+*/
 
 var getRockData = [
   getToken, {
     success: [
       storeToken,
-      set(props`cerebralPrefix`, ['app', 'oada-cache', 'bookmarks']),
+      set(props`cerebralPrefix`, ['oada-cache', 'bookmarks']),
       set(props`tree`, tree),
       cerebralCache.setup,  //setupOadaServer,
       //set(props`path`, 'rocks.list-index')
-      cerebralCache.get,
+//      cerebralCache.get,
 //      setCerebralPath,
     ], 
     error: [],
@@ -186,7 +220,7 @@ export var updateDomainText = [
 ];
 
 function getToken({props, state, path}) {
-  return path.success({token:'VYKM5ZRaSEE_W-EzOyV978WjT0hRtKoKddou5R94'})
+  return path.success({token:'GuYFW5H6qIAlIRJAS-IPj5DU1CkFrlXMd-iStfOt'})
   return db().get('token').then(function(result) {
   	//console.log('found token in pouch')
     return path.success({token:result.doc.token});

@@ -2,7 +2,7 @@ import React from 'react';
 //import {PropTypes} from 'prop-types';
 import { connect } from 'cerebral/react';
 import { MapComponent } from 'react-leaflet';
-import styles from './legend.css';
+import './legend.css';
 import Color from 'color';
 import uuid from 'uuid';
 import {state, signal} from 'cerebral/tags';
@@ -61,7 +61,7 @@ export default connect({
         }
     });
       return (
-        <div className={styles['map-legend']}>
+        <div className={'map-legend'}>
           {legendPieces}
         </div>
       );

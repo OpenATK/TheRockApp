@@ -1,15 +1,6 @@
 var stateTree = {
   token: {},
   offline: true,
-  'oada-cache': {
-    bookmarks: {
-      rocks: {
-        'list-index': {
-
-        },
-      },
-    },
-  },
   model: {
     user: {},
     domain: '',

@@ -2,14 +2,14 @@ import React from 'react';
 import { connect } from 'cerebral/react';
 import { Map, Marker, CircleMarker, TileLayer } from 'react-leaflet';
 import L from 'leaflet';
-import styles from './map.css';
+import './map.css';
 import uuid from 'uuid';
 import MarkerInput from '../MarkerInput/';
 import {state, signal} from 'cerebral/tags';
 
 export default connect({
   //rocks: state`app.model.rocks`,
-  rocks: state`app.oada\-cache.bookmarks.rocks.list\-index`,
+  rocks: state`oada\-cache.bookmarks.rocks.list\-index`,
   showAll: state`app.view.show_all_rocks`,
   currentLoc: state`app.model.current_location`,
   currentToggle: state`app.view.current_location_toggle`,
@@ -75,23 +75,26 @@ export default connect({
       var position = [40.4286882, -86.9137644];
       var rockMarkers = [];
       //console.log(this.props.rocks)
-      Object.keys(this.props.rocks).forEach((key) => {
-        var rock = this.props.rocks[key];
-        rockMarkers.push(
-          <Marker 
-            key={key}
-            position={[rock.location.latitude, rock.location.longitude]}
-            draggable={true}
-            icon={(rock.picked) ? rockPickedIcon : rockIcon}
-            onDragEnd={(e) => this.props.markerDragged({id: key, lat: e.target._latlng.lat, lng: e.target._latlng.lng})}
-            onClick={(e) => this.props.rockClicked({id:key})}
-            opacity={this.props.showAll || (!this.props.showAll && !rock.picked) ? 1.0 : 0.0}
-            >
-          </Marker>
-        );
-      });
+      if (this.props.rocks) {
+        Object.keys(this.props.rocks).forEach((key) => {
+          var rock = this.props.rocks[key];
+          rockMarkers.push(
+            <Marker 
+              key={key}
+              position={[rock.location.latitude, rock.location.longitude]}
+              draggable={true}
+              icon={(rock.picked) ? rockPickedIcon : rockIcon}
+              onDragEnd={(e) => this.props.markerDragged({id: key, lat: e.target._latlng.lat, lng: e.target._latlng.lng})}
+              onClick={(e) => this.props.rockClicked({id:key})}
+              opacity={this.props.showAll || (!this.props.showAll && !rock.picked) ? 1.0 : 0.0}
+              >
+            </Marker>
+          );
+        });
+      }
+
       return (
-        <div className={styles['map-panel']}>
+        <div className={'map-panel'}>
           <Map 
             dragging={true}
             center={(this.props.currentToggle) ? this.props.centerLocation : position} 
@@ -105,12 +108,12 @@ export default connect({
               attribution='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
             />
             <button
-              className={styles['gps-button']}
+              className={'gps-button'}
               onClick={() => this.props.currentLocationButtonClicked({})}
             />
             {rockMarkers}
             {currentMarker}
-            <div className={styles[(this.props.editMode) ? 'edit-panel' : 'hidden']}>
+            <div className={(this.props.editMode) ? 'edit-panel' : 'hidden'}>
               <MarkerInput />
             </div>
           </Map>

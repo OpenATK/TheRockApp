@@ -1,5 +1,6 @@
 import { Promise } from 'bluebird';
 import oadaCache from '../oada-app-cache'
+//import oadaCache from '../../app/cache'
 import { set, unset } from 'cerebral/operators';
 import { state, props } from 'cerebral/tags';
 import uuid from 'uuid';
@@ -16,11 +17,17 @@ var cerebralCache = {
   setup: [
     set(props`token`, state`app.token`),  //var token = state.get(['app', 'token']);
     set(props`domain`, state`app.model.domain`),  //var domain = state.get(['app', 'model', 'domain']);
-    oadaSetup,
-    cerebralSetup,
-//    getAvailableData,
-//  setAvailableData
+    oadaSetup, {
+      success: [
+       /* cerebralSetup, {
+          success: [],
+          error: [],
+        }*/
+      ],
+      error: [],
+    },
   ],
+
 //cerebralCache.get('app.oada-cache.bookmarks.rocks.list-index')
   get: [
     set(props`token`, state`app.token`),
@@ -65,7 +72,6 @@ var cerebralCache = {
       ],
       error: [],  //keep status 'new'
     },
-
   ],
 
   delete: [
@@ -90,70 +96,64 @@ var cerebralCache = {
 }
 module.exports = cerebralCache;
 
-//Setup
-function oadaSetup({props, state}) {
-  console.log('oadaSetup')
+//Setup the oada server so that the structure is in place and ready for PUTs.
+function oadaSetup({props, state, path}) {
   tree = props.tree;  //making it global variable for the rest of functions
-  return oadaCache.setup(props.domain, props.token, tree);
+  return oadaCache.setup(props.domain, props.token, tree)
+  .then((res)=>{
+    console.log('RES', res)
+    return path.success({})
+  }).catch((err) => {
+    return path.error({})
+  })
 };
-
-
 
 var recursiveSetup = function(domain, subTree, keysArray, {state}) {
   return Promise.each(Object.keys(subTree), function(key, i) {
-    console.log('!!!recursive starts!!!')
-    console.log(key)
-
     if (key === '*') {
-      console.log('* found!!!')
       
       //TODO: check pouchdb and if star keys available, push to keysArray
-      console.log(keysArray)
       cerebralPath = keysArray;  //assign to global variable (last step)
       return cerebralPath;
     }
     var content = subTree[key];
     if (typeof content === 'object') {  //rocks and list-index
       keysArray.push(key);
-      console.log(keysArray)
-
       keysArray.forEach((item) => {
-		  	if (!state.get(keysArray)) {
-		  		state.set(keysArray, {})
-		  	}
-		  })
-
+	if (!state.get(keysArray)) {
+          state.set(keysArray, {})
+        }
+      })
       return recursiveSetup(domain, content, keysArray, {state});
     } else return null;
-  }).then(function() {
-    console.log('!!!recursiveSetup done!!!');
+  }).then(function(res) {
+    return res
   }).catch(function(err) {
-    console.log(err)
     return err;
   })
 }
 
-function cerebralSetup({props, state}) {
-  console.log('cerebralSetup')
+// Set up the cerebral state so that it is ready for subsequent gets and sets.
+function cerebralSetup({props, state, path}) {
   cerebralPrefix = props.cerebralPrefix;  //make it global variable for the rest of functions
 
   //prefix setup
   var prefix = [];
-  //console.log(cerebralPrefix)
   cerebralPrefix.forEach((item) => {
-  	//console.log(item)
-  	prefix.push(item)
-  	//console.log(state.get(prefix))
-  	if (!state.get(prefix)) {
-  		//undefined: not in state tree
-  		//console.log(prefix)
-  		state.set(prefix, {})
-  	}
+    prefix.push(item)
+      if (!state.get(prefix)) {
+  	state.set(prefix, {})
+      }
   })
 
   var keysArray = cerebralPrefix.slice();  //copy
   var domain = props.domain;
-  return recursiveSetup(domain, tree, keysArray, {state});
+  return recursiveSetup(domain, tree, keysArray, {state})
+  .then((res) =>{
+    return path.sucess({result: res})
+  }).catch((error) => {
+    return path.error({error})
+  })
 }
 
 //Get

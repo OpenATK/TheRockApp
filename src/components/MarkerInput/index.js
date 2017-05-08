@@ -1,9 +1,7 @@
 import React from 'react';
 //import {PropTypes} from 'prop-types';
 import { connect } from 'cerebral/react';
-import styles from './marker-input.css';
-//import fastyles from '../css/font-awesome.min.css';
-//import FontAwesome from 'react-fontawesome';
+import './marker-input.css';
 import {state, signal} from 'cerebral/tags';
 
 export default connect({
@@ -20,19 +18,19 @@ export default connect({
 
     render() {
       return (
-        <div className={styles['marker-panel']}>
+        <div className={'marker-panel'}>
           <button
-            className={styles[(!this.props.rockPickStatus) ? 'pick-button' : 'put-button']}
+            className={(!this.props.rockPickStatus) ? 'pick-button' : 'put-button'}
             onClick={() => this.props.pickButtonClicked({})}
           />
           <button
-            className={styles['delete-button']}
+            className={'delete-button'}
             onClick={() => this.props.deleteButtonClicked({id: this.props.rockKey})}
           />
           <br /><br />
           <input
             type="text"
-            className={styles['comment-input']}
+            className={'comment-input'}
             placeholder="Comments..."
             value={this.props.commentInput}
             onChange={(e) => this.props.commentInputTextChanged({value:e.target.value})}
