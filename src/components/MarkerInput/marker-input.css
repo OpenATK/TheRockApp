@@ -1,3 +1,8 @@
+.marker-panel {
+  background-color: black;
+  order: 3;
+}
+
 .pick-button {
   width: 50px;
   height: 67px;

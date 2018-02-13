@@ -1,72 +1,34 @@
 import React from 'react';
-import { connect } from 'cerebral/react';
+import { connect } from '@cerebral/react';
 import './menu-bar.css';
 import {state, signal} from 'cerebral/tags';
 
 export default connect({
-  showAll: state`app.view.show_all_rocks`,
-  centerLocation: state`app.model.map_center_location`,
-  rockPickStatus: state`app.view.rock_pick_state`,
-  hideRockButtonClicked: signal`app.hideRockButtonClicked`,
-  addRockButtonClicked: signal`app.addRockButtonClicked`,
-  clearCacheButtonClicked: signal`app.clearCacheButtonClicked`,
-  setDomainButtonClicked: signal`app.setDomainButtonClicked`,
-  syncButtonClicked: signal`app.syncButtonClicked`,
-},
+         showAll: state`view.show_all_rocks`,
+  centerLocation: state`model.map_center_location`,
+  rockPickStatus: state`view.rock_pick_state`,
+  hideRockButtonClicked: signal`hideRockButtonClicked`,
+   addRockButtonClicked: signal`addRockButtonClicked`,
+}, props => 
+  <div className={'menu-bar'}>
+    <img src="launcher.png"
+         alt="meaningfulText"
+         className={'menu-appicon'}
+    />
 
-  class MenuBar extends React.Component {
+    <font className={'menu-title'}>
+      RockApp
+    </font>
 
-    render() {
-      return (
-        <div className={'menu-bar'}>
-          <img 
-            src="launcher.png"
-            alt="meaningfulText"
-            className={'menu-appicon'}
-            >
-          </img>
-
-          <font 
-            className={'menu-title'}
-            >
-            RockApp
-          </font>
-
-          <button
-            className={(this.props.showAll) ? 'eye-all-button' : 'eye-unpicked-button'}
-            onClick={() => this.props.hideRockButtonClicked({})}
-            >
-          </button>
+    <button
+      className={props.showAll ? 'eye-all-button' : 'eye-unpicked-button'}
+      onClick={() => props.hideRockButtonClicked({})}
+    />
           
-          <button
-            className={'add-button'}
-            onClick={() => this.props.addRockButtonClicked({lat: this.props.centerLocation.lat, lng: this.props.centerLocation.lng, status: this.props.rockPickStatus})}
-            >
-          </button>
+    <button
+      className={'add-button'}
+      onClick={() => props.addRockButtonClicked({lat: props.centerLocation.lat, lng: props.centerLocation.lng, status: props.rockPickStatus})}
+    />
 
-         <button 
-           type="button" 
-           className={'clear-cache-button'}
-           onClick={()=>this.props.clearCacheButtonClicked({})}>
-           Clear Cache
-         </button>
-         
-         <button 
-           type="button" 
-           className={'change-domain-button'}
-           onClick={()=>this.props.setDomainButtonClicked({})}>
-           Change Domain
-         </button>
-
-         <button 
-           type="button" 
-           className={'sync-button'}
-           onClick={()=>this.props.syncButtonClicked({})}>
-           Sync
-         </button>
-
-        </div>
-      );
-    }
-  }
-)
+  </div>
+);

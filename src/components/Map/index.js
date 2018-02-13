@@ -1,51 +1,51 @@
 import React from 'react';
-import { connect } from 'cerebral/react';
+import _ from 'lodash';
+import { connect } from '@cerebral/react';
+import {state, signal} from 'cerebral/tags';
+import uuid from 'uuid';
+
 import { Map, Marker, CircleMarker, TileLayer } from 'react-leaflet';
 import L from 'leaflet';
 import './map.css';
-import uuid from 'uuid';
-import MarkerInput from '../MarkerInput/';
-import {state, signal} from 'cerebral/tags';
+
+import MarkerInput from '../MarkerInput';
 
 export default connect({
-  //rocks: state`app.model.rocks`,
-  rocks: state`oada\-cache.bookmarks.rocks.list\-index`,
-  showAll: state`app.view.show_all_rocks`,
-  currentLoc: state`app.model.current_location`,
-  currentToggle: state`app.view.current_location_toggle`,
-  centerLocation: state`app.model.map_center_location`,
-  editMode: state`app.view.marker_edit_mode`,
-  markerDragged: signal`app.markerDragged`,
-  handleLocationFound: signal`app.handleLocationFound`,
-  mapDragged: signal`app.mapDragged`,
-  currentLocationButtonClicked: signal`app.currentLocationButtonClicked`,
-  rockClicked: signal`app.rockClicked`,
-  boundsFound: signal`app.boundsFound`,
-  initSetCenter: signal`app.initSetCenter`
+           rocks: state`model.rocks`,
+         showAll: state`view.show_all_rocks`,
+      currentLoc: state`model.current_location`,
+   currentToggle: state`view.current_location_toggle`,
+  centerLocation: state`model.map_center_location`,
+                 markerDragged: signal`markerDragged`,
+           handleLocationFound: signal`handleLocationFound`,
+                    mapDragged: signal`mapDragged`,
+  currentLocationButtonClicked: signal`currentLocationButtonClicked`,
+                   rockClicked: signal`rockClicked`,
+                   boundsFound: signal`boundsFound`,
+                 initSetCenter: signal`initSetCenter`
 },
 
   class RockMap extends React.Component {
 
     componentDidMount() {
       this.refs.map.leafletElement.locate()
-//Get Initial Center Location of Map...
-      var centerLat = this.refs.map.leafletElement.getCenter().lat;
-      var centerLng = this.refs.map.leafletElement.getCenter().lng;
-      //console.log(centerLat)
-      //console.log(centerLng)
-
+      // Get Initial Center Location of Map...
+      const centerLat = this.refs.map.leafletElement.getCenter().lat;
+      const centerLng = this.refs.map.leafletElement.getCenter().lng;
+      console.log('this.props = ', this.props);
       this.props.initSetCenter({lat:centerLat, lng:centerLng});
       
-      var bounds = this.refs.map.leafletElement.getBounds();
-      //console.log(bounds)
+      const bounds = this.refs.map.leafletElement.getBounds();
       this.props.boundsFound({bounds: bounds});
-      
     }
 
     render() {
-//Add Current Location Marker...
-      var currentMarker = [];
-      var currentPosition = [this.props.currentLoc.lat, this.props.currentLoc.lng];
+      //-------------------------------------------------------
+      // Add Current Location Marker...
+      const currentMarker = [];
+      const currentPosition = this.props.currentLoc 
+        ? [this.props.currentLoc.lat, this.props.currentLoc.lng]
+        : [ 40.1234, -86.12342 ];
       if (currentPosition[0]) {
         currentMarker.push(
           <CircleMarker
@@ -62,26 +62,27 @@ export default connect({
         );
       }
 
-      var rockIcon = L.icon({
+
+      //--------------------------------------------------------
+      // Draw the rock markers
+      const rockIcon = L.icon({
         iconUrl: 'rock.png',
-        iconAnchor: [12.5, 50],
+        iconAnchor: [18, 50],
       });
 
-      var rockPickedIcon = L.icon({
+      const rockPickedIcon = L.icon({
         iconUrl: 'rock_picked.png',
-        iconAnchor: [12.5, 50],
+        iconAnchor: [18, 50],
       });
 
-      var position = [40.4286882, -86.9137644];
-      var rockMarkers = [];
-      //console.log(this.props.rocks)
+      const position = [40.4286882, -86.9137644];
+      const rockMarkers = [];
       if (this.props.rocks) {
-        Object.keys(this.props.rocks).forEach((key) => {
-          var rock = this.props.rocks[key];
+        _.map(this.props.rocks, (rock,key) => {
           rockMarkers.push(
             <Marker 
               key={key}
-              position={[rock.location.latitude, rock.location.longitude]}
+              position={[rock.location.lat, rock.location.lng]}
               draggable={true}
               icon={(rock.picked) ? rockPickedIcon : rockIcon}
               onDragEnd={(e) => this.props.markerDragged({id: key, lat: e.target._latlng.lat, lng: e.target._latlng.lng})}
@@ -93,6 +94,15 @@ export default connect({
         });
       }
 
+      const moveEnd = () => {
+        if (!this.refs.map) return;
+        this.props.mapDragged({
+          lat:this.refs.map.leafletElement.getCenter().lat, 
+          lng: this.refs.map.leafletElement.getCenter().lng, 
+          bounds: this.refs.map.leafletElement.getBounds(),
+        });
+      }
+
       return (
         <div className={'map-panel'}>
           <Map 
@@ -101,7 +111,7 @@ export default connect({
             ref='map'
             zoom={15}            
             onLocationfound={(e) => this.props.handleLocationFound({lat:e.latlng.lat, lng:e.latlng.lng})}
-            onMoveend={(this.refs.map) ? (() => this.props.mapDragged({lat:this.refs.map.leafletElement.getCenter().lat, lng: this.refs.map.leafletElement.getCenter().lng, bounds: this.refs.map.leafletElement.getBounds()})) : false}
+            onMoveend={moveEnd}
             >
             <TileLayer
               url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
@@ -113,9 +123,6 @@ export default connect({
             />
             {rockMarkers}
             {currentMarker}
-            <div className={(this.props.editMode) ? 'edit-panel' : 'hidden'}>
-              <MarkerInput />
-            </div>
           </Map>
         </div>
       );

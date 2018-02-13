@@ -1,12 +1,6 @@
+import { Module } from 'cerebral';
 import stateTree from './stateTree.js';
 
-import { initialize } from './chains';
-import { addGeohashes } from './chains';
-import { removeGeohashes } from './chains';
-import { clearCache } from './chains';
-import { updateDomainText } from './chains';
-import { submitDomainModal } from './chains';
-import { cancelDomainModal } from './chains';
 import { addRockLoc } from './chains';
 import { setNewRockLoc } from './chains';
 import { setRockPicked } from './chains';
@@ -20,56 +14,26 @@ import { inputTextChanged } from './chains';
 import { addCommentText } from './chains';
 import { deleteRock } from './chains';
 import { displayDomainModal } from './chains';
-import { updateRockData } from './chains';
 import { initSetMapCenter } from './chains';
 
-export default {
-  state: stateTree,
+export default Module(m => {
+  return {
+    state: stateTree,
 
-  signals: {
-
-    init: initialize,
-
-    clearCacheButtonClicked: clearCache,
-
-    tileUnloaded: removeGeohashes, 
-
-    newTileDrawn: addGeohashes,
-
-    domainSubmitClicked: submitDomainModal,
-
-    domainCancelClicked: cancelDomainModal,
-
-    domainTextChanged: updateDomainText,
-
-    addRockButtonClicked: addRockLoc,
-
-    markerDragged: setNewRockLoc,
-
-    pickButtonClicked: setRockPicked,
-
-    hideRockButtonClicked: hidePickedMarker,
-
-    handleLocationFound: getCurrentLocation,
-
-    currentLocationButtonClicked: showCurrentLocation,
-
-    mapDragged: getMapCenter,
-
-    initSetCenter: initSetMapCenter,
-
-    rockClicked: showEdit,
-
-    boundsFound: setBounds,
-
-    commentInputTextChanged: inputTextChanged,
-
-    addComment: addCommentText,
-
-    deleteButtonClicked: deleteRock,
-
-    setDomainButtonClicked: displayDomainModal,
-
-    syncButtonClicked: updateRockData,
-  }
-}
+    signals: {
+      addRockButtonClicked: addRockLoc,
+      markerDragged: setNewRockLoc,
+      pickButtonClicked: setRockPicked,
+      hideRockButtonClicked: hidePickedMarker,
+      handleLocationFound: getCurrentLocation,
+      currentLocationButtonClicked: showCurrentLocation,
+      mapDragged: getMapCenter,
+      initSetCenter: initSetMapCenter,
+      rockClicked: showEdit,
+      boundsFound: setBounds,
+      commentInputTextChanged: inputTextChanged,
+      addComment: addCommentText,
+      deleteButtonClicked: deleteRock,
+    }
+  };
+});

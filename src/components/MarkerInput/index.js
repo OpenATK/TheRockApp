@@ -1,43 +1,45 @@
 import React from 'react';
-//import {PropTypes} from 'prop-types';
-import { connect } from 'cerebral/react';
-import './marker-input.css';
+import { connect } from '@cerebral/react';
 import {state, signal} from 'cerebral/tags';
 
+import './marker-input.css';
+
 export default connect({
-  rockPickStatus: state`app.view.rock_pick_state`,
-  commentInput: state`app.model.comment_input`,
-  rockKey: state`app.model.selected_key`,
-  pickButtonClicked: signal`app.pickButtonClicked`,
-  commentInputTextChanged: signal`app.commentInputTextChanged`,
-  addComment: signal`app.addComment`,
-  deleteButtonClicked: signal`app.deleteButtonClicked`,
-},
+  rockPickStatus: state`view.rock_pick_state`,
+         rockKey: state`model.selected_key`,
+           rocks: state`model.rocks`,
+        editMode: state`view.marker_edit_mode`,
 
-  class MarkerInput extends React.Component {
+        pickButtonClicked: signal`pickButtonClicked`,
+  commentInputTextChanged: signal`commentInputTextChanged`,
+               addComment: signal`addComment`,
+      deleteButtonClicked: signal`deleteButtonClicked`,
+}, props => {
+console.log('editMode = ', props.editMode); 
+  const currock = (props.rocks && props.rockKey) ? props.rocks[props.rockKey] : { comments: '' };
+  
+  if (!props.editMode) return '';
+console.log('drawing edit panel...');
+  return (
+    <div className={'marker-panel'}>
+      <button
+        className={(!props.rockPickStatus) ? 'pick-button' : 'put-button'}
+        onClick={() => props.pickButtonClicked({ id: props.rockKey, picked: !props.rockPickStatus })}
+      />
+      <button
+        className={'delete-button'}
+        onClick={() => props.deleteButtonClicked({id: props.rockKey})}
+      />
+      <br /><br />
+      <input
+        type="text"
+        className={'comment-input'}
+        placeholder="Comments..."
+        value={currock.comments}
+        onChange={(e) => props.commentInputTextChanged({value:e.target.value})}
+        onKeyDown={(e) => {if (e.keyCode === 13 || e.keyCode === 9) {props.addComment({text: props.commentInput, id: props.rockKey})}}}
+      />
+    </div>
+  );
+});
 
-    render() {
-      return (
-        <div className={'marker-panel'}>
-          <button
-            className={(!this.props.rockPickStatus) ? 'pick-button' : 'put-button'}
-            onClick={() => this.props.pickButtonClicked({})}
-          />
-          <button
-            className={'delete-button'}
-            onClick={() => this.props.deleteButtonClicked({id: this.props.rockKey})}
-          />
-          <br /><br />
-          <input
-            type="text"
-            className={'comment-input'}
-            placeholder="Comments..."
-            value={this.props.commentInput}
-            onChange={(e) => this.props.commentInputTextChanged({value:e.target.value})}
-            onKeyDown={(e) => {if (e.keyCode === 13 || e.keyCode === 9) {this.props.addComment({text: this.props.commentInput, id: this.props.rockKey})}}}
-          />
-        </div>
-      );
-    }
-  }
-)

@@ -3,19 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@cerebral/react": "^3.1.1",
     "babel-preset-react": "^6.24.1",
-    "bluebird": "^3.5.0",
-    "cerebral": "2.0.0-b-alpha.c00bd8f2",
-    "json-pointer": "^0.6.0",
-    "leaflet": "^1.0.3",
+    "bluebird": "*",
+    "cerebral": "*",
+    "leaflet": "*",
     "md5": "^2.2.1",
-    "pouchdb": "^6.2.0",
-    "prop-types": "^15.5.8",
-    "react": "^15.5.4",
-    "react-dom": "^15.5.4",
-    "react-leaflet": "^1.1.6",
-    "superagent": "^3.5.2",
-    "superagent-promise": "^1.1.0"
+    "react": "*",
+    "react-dom": "^16.2.0",
+    "react-leaflet": "*"
   },
   "devDependencies": {
     "react-scripts": "0.9.5"
