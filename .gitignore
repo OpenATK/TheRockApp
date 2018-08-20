@@ -1,6 +1,5 @@
 node_modules
-dist/*
-!dist/leaflet.css
-!dist/index.html
 *.swp
 *.DS_Store
+package-lock.json
+yarn-lock.json
