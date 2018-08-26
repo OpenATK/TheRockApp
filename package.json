@@ -1,6 +1,6 @@
 {
   "name": "TheRockApp",
-  "version": "0.1.0",
+  "version": "0.1.3",
   "private": true,
   "homepage": "https://OpenATK.github.io/TheRockApp",
   "dependencies": {
@@ -8,8 +8,8 @@
     "@cerebral/storage": "^4.2.1",
     "@material-ui/core": "^1.5.0",
     "@material-ui/icons": "^2.0.2",
-    "@oada/cerebral-module": "0.9.0",
-    "@oada/cerebral-provider": "^1.9.15",
+    "@oada/cerebral-module": "0.9.1",
+    "@oada/cerebral-provider": "^1.9.16",
     "axios": "^0.18.0",
     "bluebird": "^3.5.1",
     "cerebral": "^4.1.1",
