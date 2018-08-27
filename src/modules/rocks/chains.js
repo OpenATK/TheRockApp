@@ -40,14 +40,17 @@ export const mapOadaToRecords = sequence('rocks.mapOadaToRecords', [
 
 //Define our fetch function
 export const fetch = sequence('fetch', [
+  // ({state, props}) => ({
+  //   requests: [{
+  //     path: _localPath,
+  //     //watch: {signals: ['rocks.mapOadaToRecords']},
+  //   }]
+  // }),
   ({state, props}) => ({
-    requests: [{
-      path: _localPath,
-      //watch: {signals: ['rocks.mapOadaToRecords']},
-    }]
-  }),
-  ({state, props}) => ({
-    tree: tree,
+    connection_id: state.get('rocks.connection_id'),
+    path:          _localPath,
+    tree:          tree,
+    watch:         {signals: ['rocks.handleWatchUpdate'] }, //maverick
   }),
   oada.get,
   mapOadaToRecords
@@ -117,7 +120,7 @@ export const deleteRock = sequence('rocks.deleteRock', [
   mapOadaToRecords,
 ]);
 
-//When the app boots up, we'll load all the rock data in our database
+//When the app boots up, we'll load all the rock data in our database -------------------------
 export const init = sequence('rocks.init', [
   oada.connect,
   set(state`rocks.connection_id`, props`connection_id`),
@@ -146,5 +149,27 @@ function buildUpdateRequest({props, state}) {
     tree
   }; 
 }
+
+/**
+ * refresh the rocks module
+ * when handling updates/watches
+ * @type {Primitive}
+ */
+export const refresh = sequence('rocks.watches', [
+    set(state`rocks.connection_id`, props`connection_id`),
+    set(state`rocks.loading`, true),
+    fetch,
+    set(state`rocks.loading`, false),
+    set(props`type`, 'rocks'),
+]);
+
+/**
+ * Handles updates in the resource
+ * @type {*[]}
+ */
+export const handleWatchUpdate = [
+    () => { console.log('-->handling watch') },
+    refresh,
+];
 
 
