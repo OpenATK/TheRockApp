@@ -1,6 +1,6 @@
 {
   "name": "TheRockApp",
-  "version": "0.1.15",
+  "version": "0.1.16",
   "private": true,
   "homepage": "https://OpenATK.github.io/TheRockApp",
   "dependencies": {
