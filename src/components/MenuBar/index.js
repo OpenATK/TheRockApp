@@ -146,7 +146,7 @@ class MenuBar extends React.Component {
             <img src={launcherIcon} className={classes.appIcon} alt=''/>
           </IconButton>
           <Typography variant='title' color='inherit' className={classes.flex}>
-            RockApp [0.1.30]
+            RockApp [0.1.32]
           </Typography>
           {icons}
         </Toolbar>

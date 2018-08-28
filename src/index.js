@@ -4,6 +4,7 @@ import { Container } from '@cerebral/react';
 import App from './components/App/';
 import controller from './controller';
 import registerServiceWorker from './registerServiceWorker';
+import { unregister } from './registerServiceWorker';
 import { createMuiTheme, MuiThemeProvider } from '@material-ui/core/styles';
 
 const theme = createMuiTheme({
@@ -32,4 +33,5 @@ render(
   document.getElementById('root')
 );
 
-registerServiceWorker.unregister();
+//registerServiceWorker.unregister();
+unregister();
