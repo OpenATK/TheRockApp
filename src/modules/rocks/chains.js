@@ -156,7 +156,7 @@ function buildUpdateRequest({props, state}) {
  * @type {Primitive}
  */
 export const refresh = sequence('rocks.watches', [
-    set(state`rocks.connection_id`, props`connection_id`),
+    //set(state`rocks.connection_id`, props`connection_id`),
     set(state`rocks.loading`, true),
     fetch,
     set(state`rocks.loading`, false),
