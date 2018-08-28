@@ -3,7 +3,7 @@ import {render} from 'react-dom';
 import { Container } from '@cerebral/react';
 import App from './components/App/';
 import controller from './controller';
-import registerServiceWorker from './registerServiceWorker';
+//import registerServiceWorker from './registerServiceWorker';
 import { createMuiTheme, MuiThemeProvider } from '@material-ui/core/styles';
 
 const theme = createMuiTheme({
