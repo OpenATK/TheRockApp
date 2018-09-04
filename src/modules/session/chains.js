@@ -1,9 +1,7 @@
 import { set, toggle, debounce, increment, when} from 'cerebral/operators';
 import { props, state } from 'cerebral/tags';
 import { sequence } from 'cerebral';
-import * as rocks from '../rocks/chains.js';
 import * as app from '../app/chains.js';
-import oada from '@oada/cerebral-module/sequences';
 
 //This lets the app know that a marker has been selected for editing
 export const startEditing = [
@@ -64,7 +62,6 @@ export const reconnect = sequence('session.reconnect', [
     });
     state.set('oada', {connections: {}});
   },
-  //oada.resetCache,
   app.initialize
 ]);
 
@@ -72,7 +69,14 @@ export const sequenceIncrement = sequence('session.sequnceIncrement', [
   when(state`session.startup_sequence`, (value) => value < 3),
   {
     true: [increment(state`session.startup_sequence`)],
-    false: [set(state`session.startup_sequence`, 0)],
+    false: [
+      set(state`session.startup_sequence`, 0),
+      when(state`oada.connections`, (value) => Object.keys(value).length === 0),
+      {
+        true: [app.initialize],
+        false: [],
+      },
+    ],
   },
 ]);
 

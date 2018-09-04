@@ -156,11 +156,13 @@ function buildUpdateRequest({props, state}) {
  * @type {Primitive}
  */
 export const refresh = sequence('rocks.watches', [
-    //set(state`rocks.connection_id`, props`connection_id`),
-    set(state`rocks.loading`, true),
-    fetch,
-    set(state`rocks.loading`, false),
-    set(props`type`, 'rocks'),
+  set(state`session.marker_edit_mode`, false),
+  set(state`session.selected_key`, ''),
+  //set(state`rocks.connection_id`, props`connection_id`),
+  set(state`rocks.loading`, true),
+  fetch,
+  set(state`rocks.loading`, false),
+  set(props`type`, 'rocks'),
 ]);
 
 /**
@@ -168,8 +170,8 @@ export const refresh = sequence('rocks.watches', [
  * @type {*[]}
  */
 export const handleWatchUpdate = [
-    () => { console.log('-->handling watch') },
-    refresh,
+  () => { console.log('-->handling watch') },
+  refresh,
 ];
 
 

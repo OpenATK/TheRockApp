@@ -42,7 +42,7 @@ class OadaInstructions extends React.Component {
     return (
       <Dialog
         classes={{paper: classes.paper}}
-        open={this.props.startupSequence === 1}
+        open={this.props.startupSequence === 3}
         onClose={() => this.props.sequenceIncrement({})}>
         <Typography
           align='center' 
@@ -53,14 +53,19 @@ class OadaInstructions extends React.Component {
           <DialogContentText 
             paragraph={true} 
             classes={{root: classes.text}}>
-              To connect the the database and store the rocks you create, a popup window has been launched with a default public account. Any user in this public account can modify rocks you enter there. To log in to your private account (if you have one set up) after startup, click the cloud icon, which will launch the popup again. Enjoy!
+              To allow you to connect to the database and store the rocks you create, a login popup will be launched, pre-populated with default public account credentials. Feel free to use this account to play around, but know that any user in this public account can modify rocks you enter there. To log in to your private account (if you have one set up) after startup, click the cloud icon, which will launch the popup again.
+          </DialogContentText>
+          <DialogContentText 
+            paragraph={true} 
+            classes={{root: classes.text}}>
+            To see this instruction series again, click the RockApp Icon in the top-left corner.
           </DialogContentText>
         </DialogContent>
         <DialogActions>
           <DialogContentText 
             align='left'
             classes={{root: classes.text}}>
-              1/3
+              3/3
           </DialogContentText>
           <Button
             onClick={() => this.props.sequenceIncrement({})}

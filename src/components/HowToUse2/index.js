@@ -45,7 +45,7 @@ class HowToUse1 extends React.Component {
     return (
       <Dialog
         classes={{paper: classes.paper}}
-        open={this.props.startupSequence === 3}
+        open={this.props.startupSequence === 2}
         onClose={() => this.props.sequenceIncrement({})}>
         <Typography
           align='center' 
@@ -59,7 +59,7 @@ class HowToUse1 extends React.Component {
           <DialogContentText 
             align='left'
             classes={{root: classes.text}}>
-              3/3
+              2/3
           </DialogContentText>
           <Button
             onClick={() => this.props.sequenceIncrement({})}
