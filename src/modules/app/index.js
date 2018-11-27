@@ -9,12 +9,14 @@ import * as signals from './chains';
 
 export default Module({
   modules:{
-    rocks,
     oada: oadaModule,
+    rocks,
     session,
     storage,
   },
+
   signals,
+
   providers: {
     oada: oadaProvider
   }

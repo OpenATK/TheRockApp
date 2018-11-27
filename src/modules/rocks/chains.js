@@ -1,4 +1,4 @@
-import oada from '@oada/cerebral-module/sequences';
+import * as oada from '@oada/cerebral-module/sequences';
 import { sequence } from 'cerebral';
 import { set } from 'cerebral/operators';
 import { props, state } from 'cerebral/tags';
@@ -57,7 +57,7 @@ export const fetch = sequence('fetch', [
 ]);
  
 //When a new rock is added, this function creates the rock instance
-export const createNewRock = sequence('rocks.addRockLoc', [
+export const createNewRock = sequence('rocks.createNewRock', [
   ({state, props}) => {
     var rockId = uuid.v4();
     var rock = {
@@ -86,7 +86,7 @@ export const createNewRock = sequence('rocks.addRockLoc', [
 ]);
 
 //When a rock is moved, this updates the location
-export const resetRockLocation = sequence('rocks.setNewRockLoc', [
+export const resetRockLocation = sequence('rocks.resetRockLocation', [
   buildUpdateRequest,
   oada.put,
   mapOadaToRecords,
@@ -170,8 +170,8 @@ export const refresh = sequence('rocks.watches', [
  * @type {*[]}
  */
 export const handleWatchUpdate = [
-  () => { console.log('-->handling watch') },
-  refresh,
+  mapOadaToRecords
+  //  refresh,
 ];
 
 

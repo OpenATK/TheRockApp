@@ -46,7 +46,7 @@ class ManageConnections extends React.Component {
         <ListItem> 
           <Button
             fullWidth={true}
-            onClick={() => this.props.reconnect({})}
+            onClick={() => this.props.disconnect({})}
             classes={{root: classes.buttons}}
             variant="raised">
             <Typography 
@@ -102,6 +102,7 @@ export default connect ({
 
 	editingConnection: signal`session.editingConnection`,
 	        reconnect: signal`session.reconnect`,
+	        disconnect: signal`session.disconnect`,
   },
   withStyles(styles)(ManageConnections)
 );
